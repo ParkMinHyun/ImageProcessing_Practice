@@ -91,7 +91,7 @@ int main() {
 }
 */
 
-/*감마 보정
+/* 영상 반전
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -131,6 +131,7 @@ int main() {
 }
 */
 
+/*감마 보정
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -160,6 +161,53 @@ int main() {
 				cvSet2D(outputimage, i, j, temp);
 			}
 			else {
+				cvSet2D(outputimage, i, j, temp);
+			}
+		}
+	}
+
+	cvNamedWindow("input image", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("output image", CV_WINDOW_AUTOSIZE);
+
+	cvShowImage("input image", inputimage);
+	cvShowImage("output image", outputimage);
+
+	cvWaitKey();
+
+	cvDestroyWindow("input image");
+	cvDestroyWindow("output image");
+
+	cvReleaseImage(&inputimage);
+	cvReleaseImage(&outputimage);
+
+	return 0;
+}
+*/
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+
+#define BINARY_THRESHOLD 130
+
+int main() {
+	int i, j;
+
+	IplImage* inputimage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* outputimage = cvCreateImage(cvGetSize(inputimage), inputimage->depth, inputimage->nChannels);
+
+	CvScalar pixelValue, temp;
+
+	for (i = 0; i < inputimage->height; i++)
+	{
+		for (j = 0; j < inputimage->width; j++) {
+			pixelValue = cvGet2D(inputimage, i, j);
+
+			if (pixelValue.val[0] >= BINARY_THRESHOLD) { // 이진화 경계 값을 이용해 값이 두개만 있는 영상으로 변환
+				temp.val[0] = 255;
+				cvSet2D(outputimage, i, j, temp);
+			}
+			else {
+				temp.val[0] = 0;
 				cvSet2D(outputimage, i, j, temp);
 			}
 		}
