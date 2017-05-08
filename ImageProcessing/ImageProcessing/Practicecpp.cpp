@@ -91,6 +91,7 @@ int main() {
 }
 */
 
+/*감마 보정
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -109,6 +110,58 @@ int main() {
 			pixelValue = cvGet2D(inputimage, i, j);
 			temp.val[0] = 255 - pixelValue.val[0]; // 영상 반전
 			cvSet2D(outputimage, i, j, temp);
+		}
+	}
+
+	cvNamedWindow("input image", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("output image", CV_WINDOW_AUTOSIZE);
+
+	cvShowImage("input image", inputimage);
+	cvShowImage("output image", outputimage);
+
+	cvWaitKey();
+
+	cvDestroyWindow("input image");
+	cvDestroyWindow("output image");
+
+	cvReleaseImage(&inputimage);
+	cvReleaseImage(&outputimage);
+
+	return 0;
+}
+*/
+
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+
+#define GAMMA_CONSTANT 0.85
+
+int main() {
+	int i, j;
+
+	IplImage* inputimage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* outputimage = cvCreateImage(cvGetSize(inputimage), inputimage->depth, inputimage->nChannels);
+
+	CvScalar pixelValue, temp;
+
+	for (i = 0; i < inputimage->height; i++)
+	{
+		for (j = 0; j < inputimage->width; j++) {
+			pixelValue = cvGet2D(inputimage, i, j);
+			temp.val[0] = pow(pixelValue.val[0], 1 / GAMMA_CONSTANT); // 감마 보정
+
+			if (temp.val[0] < 0) {
+				temp.val[0] = 0;
+				cvSet2D(outputimage, i, j, temp);
+			}
+			else if (temp.val[0] > 255) {
+				temp.val[0] = 255;
+				cvSet2D(outputimage, i, j, temp);
+			}
+			else {
+				cvSet2D(outputimage, i, j, temp);
+			}
 		}
 	}
 
