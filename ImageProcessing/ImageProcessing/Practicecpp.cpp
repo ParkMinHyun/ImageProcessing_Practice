@@ -183,6 +183,8 @@ int main() {
 	return 0;
 }
 */
+
+/*이진화
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -209,6 +211,54 @@ int main() {
 			else {
 				temp.val[0] = 0;
 				cvSet2D(outputimage, i, j, temp);
+			}
+		}
+	}
+
+	cvNamedWindow("input image", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("output image", CV_WINDOW_AUTOSIZE);
+
+	cvShowImage("input image", inputimage);
+	cvShowImage("output image", outputimage);
+
+	cvWaitKey();
+
+	cvDestroyWindow("input image");
+	cvDestroyWindow("output image");
+
+	cvReleaseImage(&inputimage);
+	cvReleaseImage(&outputimage);
+
+	return 0;
+}
+*/
+
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+
+#define STRESS_START_POINT 100
+#define STRESS_END_POINT 150
+
+int main() {
+	int i, j;
+
+	IplImage* inputimage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* outputimage = cvCreateImage(cvGetSize(inputimage), inputimage->depth, inputimage->nChannels);
+
+	CvScalar pixelValue, temp;
+
+	for (i = 0; i < inputimage->height; i++)
+	{
+		for (j = 0; j < inputimage->width; j++) {
+			pixelValue = cvGet2D(inputimage, i, j);
+
+			if (pixelValue.val[0] >= STRESS_START_POINT && pixelValue.val[0] <= STRESS_END_POINT) { // 범위 강조 변환 일정 범위의 화소만 강조
+				temp.val[0] = 255;
+				cvSet2D(outputimage, i, j, temp);
+			}
+			else {
+				cvSet2D(outputimage, i, j, pixelValue);
 			}
 		}
 	}
