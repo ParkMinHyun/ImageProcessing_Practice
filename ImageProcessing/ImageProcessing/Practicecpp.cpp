@@ -281,6 +281,7 @@ int main() {
 	return 0;
 }
 */
+/* 영상 히스토그램 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -343,6 +344,141 @@ int main() {
 	cvWaitKey();
 	cvDestroyAllWindows();
 	cvReleaseImage(&histogramImage);
+	cvReleaseImage(&inputImage);
+
+	return 0;
+}
+*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define LOW 0
+#define HIGH 255
+#define HISTOGRAM_SIZE 256
+
+int main() {
+	int i, j, value;
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_COLOR);
+	IplImage* histogram_R = cvCreateImage(cvSize(HISTOGRAM_SIZE, HISTOGRAM_SIZE + 20), IPL_DEPTH_8U, 3); // 칼라 이미지 히스토그램 생성
+	IplImage* histogram_G = cvCreateImage(cvSize(HISTOGRAM_SIZE, HISTOGRAM_SIZE + 20), IPL_DEPTH_8U, 3);
+	IplImage* histogram_B = cvCreateImage(cvSize(HISTOGRAM_SIZE, HISTOGRAM_SIZE + 20), IPL_DEPTH_8U, 3);
+
+	CvScalar temp;
+
+	double HIST_R[HISTOGRAM_SIZE], HIST_G[HISTOGRAM_SIZE], HIST_B[HISTOGRAM_SIZE];
+	unsigned char scale_HIST[HISTOGRAM_SIZE];
+	double MAX, MIN, DIF;
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) { // 히스토그램 배열 초기화
+		HIST_R[i] = LOW;
+		HIST_G[i] = LOW;
+		HIST_B[i] = LOW;
+	}
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) { // 빈도수 조사
+		for (j = 0; j < inputImage->width; j++) {
+			temp = cvGet2D(inputImage, i, j);
+
+			HIST_R[(int)temp.val[2]]++; // R
+			HIST_G[(int)temp.val[1]]++; // G
+			HIST_B[(int)temp.val[0]]++; // B
+		}
+	}
+
+	MAX = HIST_R[0]; // R히스토그램 그리기
+	MIN = HIST_R[0];
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		if (HIST_R[i] > MAX) MAX = HIST_R[i]; // 정규화를 위한 최대 최소 구하기
+		if (HIST_R[i] < MIN) MIN = HIST_R[i];
+	}
+
+	DIF = MAX - MIN; // 최대값과 최소값의 빈도수 차이
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		scale_HIST[i] = (unsigned char)((HIST_R[i] - MIN) * HIGH / DIF); // 정규화
+	}
+
+	cvSet(histogram_R, cvScalar(255, 255, 255)); // 배경 흰색으로
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) { // 히스토그램의 값은 검은색으로 출력
+		for (j = 0; j < scale_HIST[i]; j++) {
+			cvSet2D(histogram_R, HISTOGRAM_SIZE - j - 1, i, cvScalar(0));
+		}
+	}
+
+	for (i = HISTOGRAM_SIZE + 5; i < HISTOGRAM_SIZE + 20; i++) { // 히스토그램의 아래부분의 색을 표시
+		for (j = 0; j < HISTOGRAM_SIZE; j++) {
+			cvSet2D(histogram_R, i, j, cvScalar(0, 0, j));
+		}
+	}
+
+	MAX = HIST_G[0]; // G히스토그램 그리기
+	MIN = HIST_G[0];
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		if (HIST_G[i] > MAX) MAX = HIST_G[i];
+		if (HIST_G[i] < MIN) MIN = HIST_G[i];
+	}
+
+	DIF = MAX - MIN;
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		scale_HIST[i] = (unsigned char)((HIST_G[i] - MIN) * HIGH / DIF);
+	}
+
+	cvSet(histogram_G, cvScalar(255, 255, 255));
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		for (j = 0; j < scale_HIST[i]; j++) {
+			cvSet2D(histogram_G, HISTOGRAM_SIZE - j - 1, i, cvScalar(0));
+		}
+	}
+
+	for (i = HISTOGRAM_SIZE + 5; i < HISTOGRAM_SIZE + 20; i++) {
+		for (j = 0; j < HISTOGRAM_SIZE; j++) {
+			cvSet2D(histogram_G, i, j, cvScalar(0, j, 0));
+		}
+	}
+
+	MAX = HIST_B[0];
+	MIN = HIST_B[0]; // B히스토그램 그리기
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		if (HIST_B[i] > MAX) MAX = HIST_B[i];
+		if (HIST_B[i] < MIN) MIN = HIST_B[i];
+	}
+
+	DIF = MAX - MIN;
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		scale_HIST[i] = (unsigned char)((HIST_B[i] - MIN) * HIGH / DIF);
+	}
+
+	cvSet(histogram_B, cvScalar(255, 255, 255));
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		for (j = 0; j < scale_HIST[i]; j++) {
+			cvSet2D(histogram_B, HISTOGRAM_SIZE - j - 1, i, cvScalar(0));
+		}
+	}
+
+	for (i = HISTOGRAM_SIZE + 5; i < HISTOGRAM_SIZE + 20; i++) {
+		for (j = 0; j < HISTOGRAM_SIZE; j++) {
+			cvSet2D(histogram_B, i, j, cvScalar(j, 0, 0));
+		}
+	}
+
+	cvShowImage("input image", inputImage);
+	cvShowImage("histogram_R", histogram_R);
+	cvShowImage("histogram_G", histogram_G);
+	cvShowImage("histogram_B", histogram_B);
+
+	cvWaitKey();
+	cvDestroyAllWindows();
+	cvReleaseImage(&histogram_R);
+	cvReleaseImage(&histogram_G);
+	cvReleaseImage(&histogram_B);
 	cvReleaseImage(&inputImage);
 
 	return 0;
