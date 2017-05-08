@@ -233,6 +233,7 @@ int main() {
 }
 */
 
+/*범위 강조
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -276,6 +277,73 @@ int main() {
 
 	cvReleaseImage(&inputimage);
 	cvReleaseImage(&outputimage);
+
+	return 0;
+}
+*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define LOW 0
+#define HIGH 255
+#define HISTOGRAM_SIZE 256
+
+int main() {
+	int i, j, value;
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* histogramImage = cvCreateImage(cvSize(HISTOGRAM_SIZE, HISTOGRAM_SIZE + 20), IPL_DEPTH_8U, 1); // 히스토그램 이미지 생성
+
+	CvScalar temp;
+
+	double HIST[HISTOGRAM_SIZE]; // 히스토그램 배열선언
+	unsigned char scale_HIST[HISTOGRAM_SIZE]; // 누적합 배열 선언
+	double MAX, MIN, DIF;
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) HIST[i] = LOW; // 히스토그램 배열 0으로 초기화
+
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) {
+			temp = cvGet2D(inputImage, i, j); // 빈도수 조사
+			value = (int)temp.val[0];
+			HIST[value]++;
+		}
+	}
+
+	MAX = HIST[0];
+	MIN = HIST[0];
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) { // 정규화를 위한 최대 최소값 구하기
+		if (HIST[i] > MAX) MAX = HIST[i];
+		if (HIST[i] < MIN) MIN = HIST[i];
+	}
+
+	DIF = MAX - MIN; // 최대값과 최소값의 차이
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		scale_HIST[i] = (unsigned char)((HIST[i] - MIN) * HIGH / DIF); // 기본 명암 대비 스트레칭
+	}
+
+	cvSet(histogramImage, cvScalar(255)); // 배경은 흰색
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		for (j = 0; j < scale_HIST[i]; j++) {
+			cvSet2D(histogramImage, HISTOGRAM_SIZE - j - 1, i, cvScalar(0)); // 히스토그램의 값은 검은색으로 출력
+		}
+	}
+
+	for (i = HISTOGRAM_SIZE + 5; i < HISTOGRAM_SIZE + 20; i++) { //아래 부분에 히스토그램의 색을 표시
+		for (j = 0; j < HISTOGRAM_SIZE; j++) {
+			cvSet2D(histogramImage, i, j, cvScalar(j));
+		}
+	}
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("histogramImage", histogramImage);
+
+	cvWaitKey();
+	cvDestroyAllWindows();
+	cvReleaseImage(&histogramImage);
+	cvReleaseImage(&inputImage);
 
 	return 0;
 }
