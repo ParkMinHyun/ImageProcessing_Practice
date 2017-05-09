@@ -485,6 +485,7 @@ int main() {
 	return 0;
 }
 */
+/*히스토그램 함수화
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -512,6 +513,112 @@ void Show_histogram(IplImage* img, char* imgWindowName, char* histogramWindowNam
 	int i, j, value;
 	IplImage* inputImage = img;
 	IplImage* histogramImage = cvCreateImage(cvSize(HISTOGRAM_SIZE, HISTOGRAM_SIZE + 20), IPL_DEPTH_8U, 1); // 가로 256, 세로 276
+
+	CvScalar temp;
+
+	double HIST[HISTOGRAM_SIZE]; // 히스토그램 배열선언
+	unsigned char scale_HIST[HISTOGRAM_SIZE];
+	double MAX, MIN, DIF;
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) HIST[i] = LOW; // 히스토그램 배열 0으로 초기화
+
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) { // 빈도수 조사
+			temp = cvGet2D(inputImage, i, j);
+			value = (int)temp.val[0];
+			HIST[value]++;
+		}
+	}
+
+	MAX = HIST[0];
+	MIN = HIST[0];
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) { // 정규화를 위한 최대 최소값 구하기
+		if (HIST[i] > MAX) MAX = HIST[i];
+		if (HIST[i] < MIN) MIN = HIST[i];
+	}
+
+	DIF = MAX - MIN; // 최대값과 최소값의 차이
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		scale_HIST[i] = (unsigned char)((HIST[i] - MIN) * HIGH / DIF);
+	}
+
+	cvSet(histogramImage, cvScalar(255)); // 배경은 흰색
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		for (j = 0; j < scale_HIST[i]; j++) {
+			cvSet2D(histogramImage, HISTOGRAM_SIZE - j - 1, i, cvScalar(0)); // 히스토그램의 값은 검은색으로 출력
+		}
+	}
+
+	for (i = HISTOGRAM_SIZE + 5; i < HISTOGRAM_SIZE + 20; i++) { //아래 부분에 히스토그램의 색을 표시
+		for (j = 0; j < HISTOGRAM_SIZE; j++) {
+			cvSet2D(histogramImage, i, j, cvScalar(j));
+		}
+	}
+
+	cvShowImage(imgWindowName, inputImage);
+	cvShowImage(histogramWindowName, histogramImage);
+}
+*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define LOW 0
+#define HIGH 255
+#define HISTOGRAM_SIZE 256
+
+void Show_histogram(IplImage* img, char* imgWindowName, char* histogramWindowName);
+
+int main() {
+	int i, j, value;
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* equalImage = cvCreateImage(cvGetSize(inputImage), inputImage->depth, inputImage->nChannels);
+
+	CvScalar temp;
+
+	double HIST[HISTOGRAM_SIZE];
+	double sum_of_HIST[HISTOGRAM_SIZE];
+	double SUM = 0.0;
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) HIST[i] = LOW; // 히스토그램 초기화
+
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) { // 1단계 각 명암 값에 대한 빈도수 계산
+			temp = cvGet2D(inputImage, i, j);
+			value = (int)temp.val[0];
+			HIST[value]++;
+		}
+	}
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) { // 2단계 각 명암 값 빈도수의 누적합 계산
+		SUM = SUM + HIST[i];
+		sum_of_HIST[i] = SUM;
+	}
+
+	for (i = 0; i < inputImage->height; i++) { // 명암 분포가 빈약한 영상을 균일하게 만들어줌
+		for (j = 0; j < inputImage->width; j++) {
+			temp = cvGet2D(inputImage, i, j);
+			cvSet2D(equalImage, i, j, cvScalar(sum_of_HIST[(int)temp.val[0]] * HIGH / (inputImage->height*inputImage->width))); // 누적 빈도수를 정규화
+		}
+	}
+
+	Show_histogram(inputImage, "input image", "input histogram");
+	Show_histogram(equalImage, "Equal image", "Equal histogram");
+
+	cvWaitKey();
+	cvDestroyAllWindows();
+	cvReleaseImage(&equalImage);
+	cvReleaseImage(&inputImage);
+
+	return 0;
+}
+
+void Show_histogram(IplImage* img, char* imgWindowName, char* histogramWindowName) {
+	int i, j, value;
+	IplImage* inputImage = img;
+	IplImage* histogramImage = cvCreateImage(cvSize(HISTOGRAM_SIZE, HISTOGRAM_SIZE + 20), IPL_DEPTH_8U, 1);
 
 	CvScalar temp;
 
