@@ -1101,7 +1101,7 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 }
 */
 
-/*인접한 이웃 화소간 보간법*/
+/*인접한 이웃 화소간 보간법
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -1120,6 +1120,57 @@ int main() {
 	}
 
 	cvShowImage("input Image", inputImage);
+	cvShowImage("Output Image", outputImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage);
+
+	return 0;
+}
+*/
+
+/*양선형 화소 보간법*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define ZOOM_RATE 2.0 // 확대 비율
+
+int main() {
+	int i, j, i_H, i_W;
+	double r_H, r_W, s_H, s_W;
+	CvScalar C1, C2, C3, C4, newValue;
+
+	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage *outputImage = cvCreateImage(cvSize(inputImage->width * ZOOM_RATE, inputImage->height * ZOOM_RATE), 8, 1);
+
+	for (i = 0; i < outputImage->height; i++) {
+		for (j = 0; j < outputImage->width; j++) {
+			r_H = i / ZOOM_RATE; // 목적영상의 원시영상에서 정확한 좌표
+			r_W = j / ZOOM_RATE;
+
+			i_H = (int)r_H; // 소수점 버림
+			i_W = (int)r_W;
+
+			s_H = r_H - i_H; // 소수점 이하 값 대입
+			s_W = r_W - i_W;
+
+			if (i_H >= (inputImage->height - 1) || i_W >= (inputImage->width - 1)) { // 목적 영상 경계처리
+				cvSet2D(outputImage, i, j, cvScalar(0));
+			}
+			else { // 양선형 보간법 계산
+				C1 = cvGet2D(inputImage, i_H, i_W);
+				C2 = cvGet2D(inputImage, i_H, i_W + 1);
+				C3 = cvGet2D(inputImage, i_H + 1, i_W + 1);
+				C4 = cvGet2D(inputImage, i_H + 1, i_W);
+				newValue.val[0] = (C1.val[0] * (1 - s_W)*(1 - s_H) + C2.val[0] * s_W * (1 - s_H) * C3.val[0] * s_W * s_H + C4.val[0] * (1 - s_W) * s_H);
+				cvSet2D(outputImage, i, j, newValue);
+			}
+		}
+	}
+
+	cvShowImage("Input Image", inputImage);
 	cvShowImage("Output Image", outputImage);
 	cvWaitKey();
 
