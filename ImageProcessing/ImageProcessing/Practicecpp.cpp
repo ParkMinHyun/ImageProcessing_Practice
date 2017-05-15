@@ -968,7 +968,7 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	return outputImage;
 }
 */
-/*고주파 통과 필터*/
+/*고주파 통과 필터
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -989,6 +989,81 @@ int main() {
 	cvDestroyAllWindows();
 	cvReleaseImage(&inputImage);
 	cvReleaseImage(&ResultImage);
+}
+
+IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
+	IplImage* tempinputImage = cvCreateImage(cvSize(inputImage->width + 2, inputImage->height + 2), IPL_DEPTH_8U, 1);
+	IplImage* outputImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
+
+	int i, j, n, m;
+	double Sum = 0.0;
+	CvScalar tempScalar;
+
+	cvSetZero(tempinputImage); // 경계처리는 0을 삽입, temp이미지 검은색으로 채움
+
+	for (i = 0; i < inputImage->height; i++) { // temp 이미지에 인풋 이미지 복사
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(tempinputImage, i + 1, j + 1, cvGet2D(inputImage, i, j));
+		}
+	}
+
+	for (i = 0; i < inputImage->height; i++) { // 컨벌루션 연산
+		for (j = 0; j < inputImage->width; j++) {
+			for (n = 0; n < 3; n++) {
+				for (m = 0; m < 3; m++) { // 마스크와 연산하면서 Sum에 누적
+					tempScalar = cvGet2D(tempinputImage, i + n, j + m);
+					Sum += Mask[n][m] * tempScalar.val[0];
+				}
+			}
+			cvSet2D(outputImage, i, j, cvScalar(Sum)); // 결과값을 아웃풋 이미지에 넣음
+			Sum = 0.0;
+		}
+	}
+
+	cvReleaseImage(&tempinputImage);
+
+	return outputImage;
+}
+*/
+/*저주파 통과 필터*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define ALPHA 2
+
+IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]);
+
+int main() {
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* tempImage = NULL;
+	IplImage* ResultImage_1 = cvCreateImage(cvGetSize(inputImage), inputImage->depth, inputImage->nChannels);
+	IplImage* ResultImage_2 = cvCreateImage(cvGetSize(inputImage), inputImage->depth, inputImage->nChannels);
+
+	double LPF_Mask[3][3] = { { 1 / 9.,1 / 9.,1 / 9. },{ 1 / 9.,1 / 9.,1 / 9. },{ 1 / 9.,1 / 9.,1 / 9. } };
+	int i, j;
+	CvScalar inputPixel, tempPixel;
+
+	tempImage = ConvolutionProcess(inputImage, LPF_Mask);
+
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) {
+			inputPixel = cvGet2D(inputImage, i, j);
+			tempPixel = cvGet2D(tempImage, i, j);
+
+			cvSet2D(ResultImage_1, i, j, cvScalar(inputPixel.val[0] - tempPixel.val[0])); // Unsharp Masking = (원 영상) - (저주파 통과 필터링 결과 영상)
+			cvSet2D(ResultImage_2, i, j, cvScalar(ALPHA * inputPixel.val[0] - tempPixel.val[0])); // High-Boost = a (원 영상) - (저주파 통과 필터링 결과 영상)
+		}
+	}
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("Result Image1", ResultImage_1);
+	cvShowImage("Result Image2", ResultImage_2);
+
+	cvWaitKey();
+	cvDestroyAllWindows();
+	cvReleaseImage(&ResultImage_1);
+	cvReleaseImage(&ResultImage_2);
+	cvReleaseImage(&inputImage);
 }
 
 IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
