@@ -1326,6 +1326,8 @@ int main()
 	return 0;
 }
 */
+
+/*논리 표현
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv/highgui.h>
@@ -1384,4 +1386,103 @@ int main() {
 	cvReleaseImage(&xorimage);
 
 	return 0;
+}
+*/
+
+/*앤드인탐색*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define LOW 0
+#define HIGH 255
+#define HISTOGRAM_SIZE 256
+#define ENDIN_LOW 30
+#define ENDIN_HIGH 225
+
+void Show_histogram(IplImage* img, char* imgWindowName, char* histogramWindowName);
+
+int main() {
+	int i, j;
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* endin_Image = cvCreateImage(cvGetSize(inputImage), inputImage->depth, inputImage->nChannels);
+
+	CvScalar temp;
+
+	for (i = 0; i < inputImage->height; i++) { // 앤드 인 탐색 - 일정한 양의 화소를 흰색이나 검정색으로 지정하여 히스토그램의 분포를 좀더 균일하게 만듦
+		for (j = 0; j < inputImage->width; j++) {
+			temp = cvGet2D(inputImage, i, j);
+			if (temp.val[0] >= ENDIN_HIGH) { // 두개의 임계 값 로우 하이 사용
+				cvSet2D(endin_Image, i, j, cvScalar(255)); // 흰색
+			}
+			else if (temp.val[0] <= ENDIN_LOW) {
+				cvSet2D(endin_Image, i, j, cvScalar(0)); // 검은색
+			}
+			else {
+				cvSet2D(endin_Image, i, j, cvScalar((temp.val[0] - ENDIN_LOW) * HIGH / (ENDIN_HIGH - ENDIN_LOW))); // 앤드 인 탐색 공식
+			}
+		}
+	}
+
+	Show_histogram(inputImage, "input image", "input histogram");
+	Show_histogram(endin_Image, "EndIn image", "EndIn histogram");
+
+	cvWaitKey();
+	cvDestroyAllWindows();
+	cvReleaseImage(&endin_Image);
+	cvReleaseImage(&inputImage);
+
+	return 0;
+}
+
+void Show_histogram(IplImage* img, char* imgWindowName, char* histogramWindowName) {
+	int i, j, value;
+	IplImage* inputImage = img;
+	IplImage* histogramImage = cvCreateImage(cvSize(HISTOGRAM_SIZE, HISTOGRAM_SIZE + 20), IPL_DEPTH_8U, 1); // 가로 256, 세로 276
+
+	CvScalar temp;
+
+	double HIST[HISTOGRAM_SIZE]; // 히스토그램 배열선언
+	unsigned char scale_HIST[HISTOGRAM_SIZE];
+	double MAX, MIN, DIF;
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) HIST[i] = LOW; // 히스토그램 배열 0으로 초기화
+
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) { // 빈도수 조사
+			temp = cvGet2D(inputImage, i, j);
+			value = (int)temp.val[0];
+			HIST[value]++;
+		}
+	}
+
+	MAX = HIST[0];
+	MIN = HIST[0];
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) { // 정규화를 위한 최대 최소값 구하기
+		if (HIST[i] > MAX) MAX = HIST[i];
+		if (HIST[i] < MIN) MIN = HIST[i];
+	}
+
+	DIF = MAX - MIN; // 최대값과 최소값의 차이
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		scale_HIST[i] = (unsigned char)((HIST[i] - MIN) * HIGH / DIF); // 정규화
+	}
+
+	cvSet(histogramImage, cvScalar(255)); // 배경은 흰색
+
+	for (i = 0; i < HISTOGRAM_SIZE; i++) {
+		for (j = 0; j < scale_HIST[i]; j++) {
+			cvSet2D(histogramImage, HISTOGRAM_SIZE - j - 1, i, cvScalar(0)); // 히스토그램의 값은 검은색으로 출력 // 밑에서부터 그린다
+		}
+	}
+
+	for (i = HISTOGRAM_SIZE + 5; i < HISTOGRAM_SIZE + 20; i++) { //아래 부분에 히스토그램의 색을 표시
+		for (j = 0; j < HISTOGRAM_SIZE; j++) {
+			cvSet2D(histogramImage, i, j, cvScalar(j));
+		}
+	}
+
+	cvShowImage(imgWindowName, inputImage);
+	cvShowImage(histogramWindowName, histogramImage);
 }
