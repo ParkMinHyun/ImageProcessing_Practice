@@ -1025,7 +1025,7 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	return outputImage;
 }
 */
-/*저주파 통과 필터*/
+/*저주파 통과 필터
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -1098,4 +1098,34 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	cvReleaseImage(&tempinputImage);
 
 	return outputImage;
+}
+*/
+
+/*인접한 이웃 화소간 보간법*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define ZOOM_RATE 2 // 영상 확대 비율
+
+int main() {
+	int i, j;
+
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* outputImage = cvCreateImage(cvSize(inputImage->width * ZOOM_RATE, inputImage->height * ZOOM_RATE), 8, 1);
+
+	for (i = 0; i < outputImage->height; i++) {
+		for (j = 0; j < outputImage->width; j++) {
+			cvSet2D(outputImage, i, j, cvGet2D(inputImage, i / ZOOM_RATE, j / ZOOM_RATE));
+		}
+	}
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("Output Image", outputImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage);
+
+	return 0;
 }
