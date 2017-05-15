@@ -1260,7 +1260,7 @@ void BubbleSort(double *A, int MAX) { // 데이터 정렬
 }
 */
 
-/*평균 표현*/
+/*평균 표현
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -1322,6 +1322,66 @@ int main()
 	cvDestroyAllWindows();
 	cvReleaseImage(&inputImage);
 	cvReleaseImage(&outputImage);
+
+	return 0;
+}
+*/
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/highgui.h>
+
+#define AND_CONSTANT 128
+#define OR_CONSTANT 128
+#define XOR_CONSTANT 128
+
+int main() {
+	int i, j;
+
+	IplImage* inputimage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE); // 이미지 불러오기
+	IplImage* andimage = cvCreateImage(cvGetSize(inputimage), inputimage->depth, inputimage->nChannels); // 논리연산 이미지 생성
+	IplImage* orimage = cvCreateImage(cvGetSize(inputimage), inputimage->depth, inputimage->nChannels);
+	IplImage* xorimage = cvCreateImage(cvGetSize(inputimage), inputimage->depth, inputimage->nChannels);
+
+	CvScalar pixelValue, temp;
+	unsigned char charPixel; // unsigned char 사용하는 이유 : 0부터 255까지 범위 정확함
+
+	for (i = 0; i < inputimage->height; i++) { // i가 y
+		for (j = 0; j < inputimage->width; j++) { // j가 x
+			pixelValue = cvGet2D(inputimage, i, j); // 스칼라값 가져옴
+			charPixel = (unsigned char)pixelValue.val[0]; // 형 변환
+														  //AND
+			temp.val[0] = (double)(charPixel & (unsigned char)AND_CONSTANT); // AND &
+			cvSet2D(andimage, i, j, temp);
+			//OR
+			temp.val[0] = (double)(charPixel | (unsigned char)OR_CONSTANT); // OR |
+			cvSet2D(orimage, i, j, temp);
+			//XOR
+			temp.val[0] = (double)(charPixel ^ (unsigned char)XOR_CONSTANT); // XOR ^
+			cvSet2D(xorimage, i, j, temp);
+		}
+	}
+
+	cvNamedWindow("input image", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("and image", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("or image", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("xor image", CV_WINDOW_AUTOSIZE);
+
+	cvShowImage("input image", inputimage);
+	cvShowImage("and image", andimage);
+	cvShowImage("or image", orimage);
+	cvShowImage("xor image", xorimage);
+
+	cvWaitKey();
+
+	cvDestroyWindow("input image");
+	cvDestroyWindow("and image");
+	cvDestroyWindow("or image");
+	cvDestroyWindow("xor image");
+
+	cvReleaseImage(&inputimage);
+	cvReleaseImage(&andimage);
+	cvReleaseImage(&orimage);
+	cvReleaseImage(&xorimage);
 
 	return 0;
 }
