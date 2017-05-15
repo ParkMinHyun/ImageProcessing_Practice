@@ -1182,7 +1182,7 @@ int main() {
 }
 */
 
-/*미디어 블러 필터*/
+/*미디어 블러 필터
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -1257,4 +1257,71 @@ void BubbleSort(double *A, int MAX) { // 데이터 정렬
 			}
 		}
 	}
+}
+*/
+
+/*평균 표현*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define SUB_SAMPLING_RATE 2 //축소 비율
+
+int main()
+{
+	int i, j, n, m, k, index = 0;
+	double *Mask, *OutputValue, Sum = 0.0;
+	CvScalar tempScalar;
+
+	Mask = new double[SUB_SAMPLING_RATE * SUB_SAMPLING_RATE]; //마스크 크기
+
+	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage *outputImage = cvCreateImage(cvSize((inputImage->width + 1) / SUB_SAMPLING_RATE, (inputImage->height + 1) / SUB_SAMPLING_RATE), 8, 1);
+	IplImage *tempImage = cvCreateImage(cvSize(inputImage->width + 1, inputImage->height + 1), 8, 1);
+
+	OutputValue = new double[(inputImage->width + 1) / SUB_SAMPLING_RATE * (inputImage->height + 1) / SUB_SAMPLING_RATE];
+
+	cvSetZero(tempImage);
+
+	for (i = 0; i<inputImage->height; i++)
+	{
+		for (j = 0; j<inputImage->width; j++)
+		{
+			cvSet2D(tempImage, i, j, cvGet2D(inputImage, i, j));
+		}
+	}
+
+
+	for (i = 0; i<inputImage->height; i = i + SUB_SAMPLING_RATE) {
+		for (j = 0; j<inputImage->width; j = j + SUB_SAMPLING_RATE) {
+			for (n = 0; n<SUB_SAMPLING_RATE; n++) {
+				for (m = 0; m<SUB_SAMPLING_RATE; m++)
+				{
+					tempScalar = cvGet2D(tempImage, i + n, j + m);
+					Mask[n*SUB_SAMPLING_RATE + m] = tempScalar.val[0]; //마스크 크기의 화소값 배열 만듬
+				}
+			}
+			for (k = 0; k<SUB_SAMPLING_RATE*SUB_SAMPLING_RATE; k++) { //배열 값들 합함
+				Sum += Mask[k];
+			}
+
+			OutputValue[index++] = (Sum / (SUB_SAMPLING_RATE * SUB_SAMPLING_RATE)); //Sum값 마스크 크기로 나누어서 평균값 배열 만듬
+			Sum = 0.0;
+		}
+	}
+
+	for (i = 0; i<outputImage->height; i++) { //OutputValue 행렬 값들 outputImage에 입력
+		for (j = 0; j<outputImage->width; j++) {
+			cvSet2D(outputImage, i, j, cvScalar(OutputValue[i*outputImage->width + j]));
+		}
+	}
+
+	cvShowImage("Input Image", inputImage);
+	cvShowImage("Output Image", outputImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage);
+
+	return 0;
 }
