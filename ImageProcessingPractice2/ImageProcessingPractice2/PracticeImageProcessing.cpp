@@ -123,7 +123,7 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	return outputImage;
 }
 */
-/*Canny 에지 검출*/
+/*Canny 에지 검출
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -143,6 +143,84 @@ int main() {
 	cvDestroyAllWindows();
 
 	cvReleaseImage(&CannyEdgeImage);
+	cvReleaseImage(&inputImage);
+}
+
+IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
+	IplImage* tempinputImage = cvCreateImage(cvSize(inputImage->width + 2, inputImage->height + 2), IPL_DEPTH_8U, 1);
+	IplImage* outputImage = cvCreateImage(cvGetSize(inputImage), IPL_DEPTH_8U, 1);
+
+	int i, j, n, m;
+	double Sum = 0.0;
+	CvScalar tempScalar;
+
+	cvSetZero(tempinputImage); // 경계처리는 0을 삽입, temp이미지 검은색으로 채움
+
+	for (i = 0; i < inputImage->height; i++) { // temp 이미지에 인풋 이미지 복사
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(tempinputImage, i + 1, j + 1, cvGet2D(inputImage, i, j));
+		}
+	}
+
+	for (i = 0; i < inputImage->height; i++) { // 컨벌루션 연산
+		for (j = 0; j < inputImage->width; j++) {
+			for (n = 0; n < 3; n++) {
+				for (m = 0; m < 3; m++) { // 마스크와 연산하면서 Sum에 누적
+					tempScalar = cvGet2D(tempinputImage, i + n, j + m);
+					Sum += Mask[n][m] * tempScalar.val[0];
+				}
+			}
+			cvSet2D(outputImage, i, j, cvScalar(Sum)); // 결과값을 아웃풋 이미지에 넣음
+			Sum = 0.0;
+		}
+	}
+	cvReleaseImage(&tempinputImage);
+
+	return outputImage;
+}
+*/
+/*로버츠 마스크*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]);
+
+int main() {
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* SumImage = cvCreateImage(cvGetSize(inputImage), inputImage->depth, inputImage->nChannels);
+	IplImage* RowImage = NULL;
+	IplImage* ColImage = NULL;
+
+	//double RowMask[3][3] = { {-1.,0.,0.},{0.,1.,0.},{0.,0.,0.} }; // 로버츠
+	//double ColMask[3][3] = { {0.,0.,-1.},{0.,1.,0.},{0.,0.,0.} };
+	//double freeRowMask[3][3] = { {-1.,-1.,-1.},{0.,0.,0.},{1.,1.,1.} }; // 프리윗
+	//double freeColMask[3][3] = { {1.,0.,-1.},{1.,0.,-1.},{1.,0.,-1.} };
+	double soRowMask[3][3] = { { -1.,-2.,-1 },{ 0.,0.,0. },{ 1.,2.,1. } }; // 소벨
+	double soColMask[3][3] = { { 1.,0.,-1. },{ 2.,0.,-2. },{ 1.,0.,-1. } };
+
+	int i, j;
+	CvScalar horizontemp, vertical;
+
+	//RowImage = ConvolutionProcess(inputImage, RowMask); // 로버츠
+	//ColImage = ConvolutionProcess(inputImage, ColMask);
+	//RowImage = ConvolutionProcess(inputImage, freeRowMask); // 프리윗
+	//ColImage = ConvolutionProcess(inputImage, freeColMask);
+	RowImage = ConvolutionProcess(inputImage, soRowMask); // 소벨
+	ColImage = ConvolutionProcess(inputImage, soColMask);
+
+	cvOr(RowImage, ColImage, SumImage); // 두개 이미지 합치는 함수
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("RowEdge Image", RowImage);
+	cvShowImage("ColEdge Image", ColImage);
+	cvShowImage("Sum Image", SumImage);
+
+	cvWaitKey();
+	cvDestroyAllWindows();
+
+	cvReleaseImage(&RowImage);
+	cvReleaseImage(&ColImage);
+	cvReleaseImage(&SumImage);
 	cvReleaseImage(&inputImage);
 }
 
