@@ -257,7 +257,7 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	return outputImage;
 }
 */
-/*이동*/
+/*이동
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -285,6 +285,286 @@ int main() {
 	cvDestroyAllWindows();
 	cvReleaseImage(&inputImage);
 	cvReleaseImage(&outputImage);
+
+	return 0;
+}
+*/
+
+/*고주파 통과 필터링
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+int main() {
+	int i, j, n, m;
+	CvScalar tempValue;
+	double filter[3][3] = { { -1./9.,-1./9., -1./9. },{ -1./9.,8./9.,-1./9.},{ -1./9.,-1./9.,-1./ 9. } };
+	//double filter[3][3] = { {1. / 18.,1. / 18., 1. / 18.},{ 1. / 18., 1. / 18., 1. / 18.},{ 1. / 18., 1. / 18., 1. / 18. } };
+
+	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage *tempImage = cvCreateImage(cvSize(inputImage->width+2, inputImage->height+2), 8, 1);
+	IplImage *outputImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
+
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(tempImage, i + 1, j + 1, cvGet2D(inputImage, i, j));
+		}
+	}
+
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) {
+			tempValue.val[0] = 0;
+			for (n = 0; n < 3; n++) {
+				for (m = 0; m < 3; m++) {
+					tempValue.val[0] += cvGet2D(tempImage, i + n, j + m).val[0] * filter[n][m];
+				}
+			}
+			cvSet2D(outputImage, i, j, tempValue);
+		}
+	}
+
+	for (i = 0; i < outputImage->height; i++) {
+		for (j = 0; j < outputImage->width; j++) {
+			tempValue.val[0] = cvGet2D(outputImage, i, j).val[0];
+			if (tempValue.val[0] > 10) {
+				cvSet2D(outputImage, i, j, cvScalar(tempValue.val[0]+100));
+			}
+		}
+	}
+
+	cvShowImage("Input Image", inputImage);
+	cvShowImage("Output Image", outputImage);
+
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage);
+
+	return 0;
+}
+*/
+/*골격화
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+#define THRESHOLD 130
+
+IplImage *gray2binaryImage(IplImage *grayimage, int Threshold);
+IplImage *Erosion(IplImage *binaryImage);
+IplImage *Dilation(IplImage *binaryImage);
+IplImage *Open(IplImage *binaryImage);
+
+int main() {
+	int i, j, sum= 1;
+	CvScalar erostempval, opentempval;
+	bool first = true;
+
+	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage *binaryImage;
+	IplImage *OpenImage;
+	IplImage *ErosionImage;
+	IplImage *Skeletonization = cvCreateImage(cvGetSize(inputImage), 8, 1);
+
+	cvSetZero(Skeletonization);
+	binaryImage = gray2binaryImage(inputImage, THRESHOLD);
+
+	while (sum) {
+		if (first == true) {
+			ErosionImage = binaryImage;
+			OpenImage = Open(ErosionImage);
+			for (i = 0; i < inputImage->height; i++) {
+				for (j = 0; j < inputImage->width; j++) {
+					erostempval = cvGet2D(ErosionImage, i, j);
+					opentempval = cvGet2D(OpenImage, i, j);
+
+					if (erostempval.val[0] != opentempval.val[0])
+						cvSet2D(Skeletonization, i, j, cvScalar(255));
+				}
+			}
+			first = false;
+		}
+		else {
+			ErosionImage = Erosion(ErosionImage);
+			OpenImage = Open(ErosionImage);
+
+			for (i = 0; i < inputImage->height; i++) {
+				for (j = 0; j < inputImage->width; j++) {
+					erostempval = cvGet2D(ErosionImage, i, j);
+					opentempval = cvGet2D(OpenImage, i, j);
+
+					if (erostempval.val[0] != opentempval.val[0])
+						cvSet2D(Skeletonization, i, j, cvScalar(255));
+
+				}
+			}
+		}
+		sum = 0;
+		for (i = 0; i < inputImage->height; i++) {
+			for (j = 0; j < inputImage->width; j++) {
+
+				sum += cvGet2D(OpenImage, i, j).val[0];
+			}
+			if (sum != 0)
+				break;
+		}
+	}
+	cvShowImage("Input Image", inputImage);
+	cvShowImage("Skeletonization Image", Skeletonization);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&Skeletonization);
+
+	return 0;
+}
+
+
+IplImage *Erosion(IplImage *binaryImage) {
+	int i, j, n, m, Erosion_Sum = 0;
+	CvScalar tempValue;
+	double Erosion_Mask[3][3] = { { 0,255,0 },{ 255,255,255 },{ 0,255,0 } };
+
+	IplImage *tempImage = cvCreateImage(cvSize(binaryImage->width + 2, binaryImage->height + 2), 8, 1);
+	IplImage *outputImage = cvCreateImage(cvSize(binaryImage->width, binaryImage->height), 8, 1);
+
+	cvSetZero(tempImage);
+
+	for (i = 0; i < binaryImage->height; i++) {
+		for (j = 0; j < binaryImage->width; j++) {
+			cvSet2D(tempImage, i + 1, j + 1, cvGet2D(binaryImage, i, j));
+		}
+	}
+
+	for (i = 0; i < binaryImage->height; i++) {
+		for (j = 0; j < binaryImage->width; j++) {
+			for (n = 0; n < 3; n++) {
+				for (m = 0; m < 3; m++) {
+					tempValue = cvGet2D(tempImage, i + n, j + m);
+					if (Erosion_Mask[n][m] == 255 && Erosion_Mask[n][m] == tempValue.val[0])
+						Erosion_Sum += 1;
+
+				}
+			}
+			if (Erosion_Sum == 5)
+				cvSet2D(outputImage, i, j, cvScalar(255));
+			else {
+				cvSet2D(outputImage, i, j, cvScalar(0));
+			}
+			Erosion_Sum = 0;
+		}
+
+	}
+	cvReleaseImage(&tempImage);
+	return outputImage;
+
+}
+
+
+IplImage *Dilation(IplImage *binaryImage) {
+	int i, j, n, m, Dilation_Sum = 0;
+	CvScalar tempValue;
+	double Dilation_Mask[3][3] = { { 255,0,255},{ 0,0,0 },{ 255,0,255 } };
+
+	IplImage *tempImage = cvCreateImage(cvSize(binaryImage->width + 2, binaryImage->height + 2), 8, 1);
+	IplImage *outputImage = cvCreateImage(cvSize(binaryImage->width, binaryImage->height), 8, 1);
+
+	cvSetZero(tempImage);
+
+	for (i = 0; i < binaryImage->height; i++) {
+		for (j = 0; j < binaryImage->width; j++) {
+			cvSet2D(tempImage, i + 1, j + 1, cvGet2D(binaryImage, i, j));
+		}
+	}
+
+	for (i = 0; i < binaryImage->height; i++) {
+		for (j = 0; j < binaryImage->width; j++) {
+			for (n = 0; n < 3; n++) {
+				for (m = 0; m < 3; m++) {
+					tempValue = cvGet2D(tempImage, i + n, j + m);
+					if (Dilation_Mask[n][m] == 0 && Dilation_Mask[n][m] == tempValue.val[0])
+						Dilation_Sum += 1;
+
+				}
+			}
+			if (Dilation_Sum == 5)
+				cvSet2D(outputImage, i, j, cvScalar(0));
+			else {
+				cvSet2D(outputImage, i, j, cvScalar(255));
+			}
+			Dilation_Sum = 0;
+		}
+
+	}
+	cvReleaseImage(&tempImage);
+	return outputImage;
+
+}
+
+IplImage *Open(IplImage *binaryImage) {
+	IplImage *outImage = cvCreateImage(cvSize(binaryImage->width, binaryImage->height), 8, 1);
+	outImage = Erosion(binaryImage);
+	outImage = Dilation(outImage);
+
+	return outImage;
+}
+
+
+IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
+	
+	IplImage *tempImage = cvCreateImage(cvSize(grayImage->width, grayImage->height), 8, 1);
+	IplImage *outImage = cvCreateImage(cvSize(grayImage->width, grayImage->height), 8, 1);
+	CvScalar tempValue;
+	int i, j;
+	
+
+	for (i = 0; i < grayImage->height; i++) {
+		for (j = 0; j < grayImage->width; j++) {
+			tempValue = cvGet2D(grayImage, i, j);
+			if (tempValue.val[0] > THRESHOLD)
+				cvSet2D(outImage, i, j, cvScalar(255));
+			else
+				cvSet2D(outImage, i, j, cvScalar(0));
+		}
+	}
+
+	cvReleaseImage(&tempImage);
+
+	return outImage;
+}
+*/
+/*대칭*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+int main() {
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* outputImage_1 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
+	IplImage* outputImage_2 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
+
+	int i, j;
+
+	for (i = 0; i < inputImage->height; i++) { // 좌우반전
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(outputImage_1, i, inputImage->width - j - 1, cvGet2D(inputImage, i, j));
+		}
+	}
+
+	for (i = 0; i < inputImage->height; i++) { // 상하반전
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(outputImage_2, inputImage->height - i - 1, j, cvGet2D(inputImage, i, j));
+		}
+	}
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("Output Image1", outputImage_1);
+	cvShowImage("Output Image2", outputImage_2);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage_1);
+	cvReleaseImage(&outputImage_2);
 
 	return 0;
 }
