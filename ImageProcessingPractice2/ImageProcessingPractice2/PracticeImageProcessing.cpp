@@ -533,7 +533,7 @@ IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
 	return outImage;
 }
 */
-/*대칭*/
+/*대칭
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -565,6 +565,53 @@ int main() {
 	cvReleaseImage(&inputImage);
 	cvReleaseImage(&outputImage_1);
 	cvReleaseImage(&outputImage_2);
+
+	return 0;
+}
+*/
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define PI 3.141592
+#define DEGREE 45 // 회전 각도
+
+int main() {
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* outputImage = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
+
+	int i, j, Center_y, Center_x, source_y, source_x;
+	double Radian, cosR, sinR;
+	CvScalar Value;
+
+	Radian = (double)DEGREE * PI / 180.0; // degree 값을 radian으로 변경
+
+	cosR = cos(Radian);
+	sinR = sin(Radian);
+
+	Center_y = inputImage->height / 2;
+	Center_x = inputImage->width / 2;
+
+	for (i = 0; i < inputImage->height; i++) { // 좌우반전
+		for (j = 0; j < inputImage->width; j++) {
+			source_x = (int)((j - Center_x)*cosR + (i - Center_y)*sinR + Center_x);
+			source_y = (int)(-(j - Center_x)*sinR + (i - Center_y)*cosR + Center_y);
+
+			if (source_x < 0 || source_y < 0 || source_y >= inputImage->height || source_x >= inputImage->width) {
+				Value.val[0] = 0;
+			}
+			else Value = cvGet2D(inputImage, source_y, source_x);
+
+			cvSet2D(outputImage, i, j, Value);
+		}
+	}
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("Output Image", outputImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage);
 
 	return 0;
 }
