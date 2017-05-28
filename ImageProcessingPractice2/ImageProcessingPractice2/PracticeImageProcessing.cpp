@@ -569,6 +569,7 @@ int main() {
 	return 0;
 }
 */
+/*회전
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -612,6 +613,88 @@ int main() {
 	cvDestroyAllWindows();
 	cvReleaseImage(&inputImage);
 	cvReleaseImage(&outputImage);
+
+	return 0;
+}
+*/
+
+/*팽창, 침식*/
+
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define THRESHOLD 130 
+
+int main() {
+	int i, j, n, m, dilationSum = 0, erosionSum = 0;
+
+	CvScalar tempValue;
+	//침식 마스크
+	double erosionMask[3][3] = { { 255,255,255 },{ 255,255,255 },{ 255,255,255 } };
+	//팽창 마스크
+	double dilationMask[3][3] = { { 0,0,0 },{ 0,0,0 },{ 0,0,0 } };
+
+	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage *binaryImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
+	IplImage *tempImage = cvCreateImage(cvSize(inputImage->width + 2, inputImage->height + 2), 8, 1);
+	IplImage *erosionImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
+	IplImage *dilationImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
+
+	//이진화
+	for (i = 0; i < inputImage->height; i++) { // 인풋이미지 temp에 옮김
+		for (j = 0; j < inputImage->width; j++) {
+			tempValue = cvGet2D(inputImage, i, j);
+			if (tempValue.val[0] > THRESHOLD)
+				cvSet2D(binaryImage, i, j, cvScalar(255));
+			else
+				cvSet2D(binaryImage, i, j, cvScalar(0));
+		}
+	}
+
+	//패딩만들기
+	for (i = 0; i < binaryImage->height; i++) { // 인풋이미지 temp에 옮김
+		for (j = 0; j < binaryImage->width; j++) {
+			cvSet2D(tempImage, i + 1, j + 1, cvGet2D(binaryImage, i, j));
+		}
+	}
+
+	//연산
+	//패딩만들기
+	for (i = 0; i < binaryImage->height; i++) { // 인풋이미지 temp에 옮김
+		for (j = 0; j < binaryImage->width; j++) {
+			for (n = 0; n < 3; n++) {
+				for (m = 0; m < 3; m++) {
+					tempValue = cvGet2D(tempImage, i + n, j + m);
+					if (erosionMask[n][m] == tempValue.val[0])
+						erosionSum += 1;
+					if (dilationMask[n][m] == tempValue.val[0])
+						dilationSum += 1;
+				}
+			}
+			if (erosionSum == 9)
+				cvSet2D(erosionImage, i, j, cvScalar(255));
+			else
+				cvSet2D(erosionImage, i, j, cvScalar(0));
+			if (dilationSum == 9)
+				cvSet2D(dilationImage, i, j, cvScalar(0));
+			else
+				cvSet2D(dilationImage, i, j, cvScalar(255));
+
+			dilationSum = 0;
+			erosionSum = 0;
+
+		}
+	}
+
+	cvShowImage("binary Image", binaryImage);
+	cvShowImage("Erosion Image", erosionImage);
+	cvShowImage("Dilation Image", dilationImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&binaryImage);
+	cvReleaseImage(&erosionImage);
+	cvReleaseImage(&dilationImage);
 
 	return 0;
 }
