@@ -343,7 +343,174 @@ int main() {
 	return 0;
 }
 */
-/*골격화
+
+/*대칭
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+int main() {
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* outputImage_1 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
+	IplImage* outputImage_2 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
+
+	int i, j;
+
+	for (i = 0; i < inputImage->height; i++) { // 좌우반전
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(outputImage_1, i, inputImage->width - j - 1, cvGet2D(inputImage, i, j));
+		}
+	}
+
+	for (i = 0; i < inputImage->height; i++) { // 상하반전
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(outputImage_2, inputImage->height - i - 1, j, cvGet2D(inputImage, i, j));
+		}
+	}
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("Output Image1", outputImage_1);
+	cvShowImage("Output Image2", outputImage_2);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage_1);
+	cvReleaseImage(&outputImage_2);
+
+	return 0;
+}
+*/
+/*회전
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define PI 3.141592
+#define DEGREE 90 // 회전 각도
+
+int main() {
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* outputImage = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
+
+	int i, j, Center_y, Center_x, source_y, source_x;
+	double Radian, cosR, sinR;
+	CvScalar Value;
+
+	Radian = (double)DEGREE * PI / 180.0; // degree 값을 radian으로 변경
+
+	cosR = cos(Radian);
+	sinR = sin(Radian);
+
+	Center_y = inputImage->height / 2;
+	Center_x = inputImage->width / 2;
+
+	for (i = 0; i < inputImage->height; i++) { // 좌우반전
+		for (j = 0; j < inputImage->width; j++) {
+			source_x = (int)((j - Center_x)*cosR + (i - Center_y)*sinR + Center_x);
+			source_y = (int)(-(j - Center_x)*sinR + (i - Center_y)*cosR + Center_y);
+
+			if (source_x < 0 || source_y < 0 || source_y >= inputImage->height || source_x >= inputImage->width) {
+				Value.val[0] = 0;
+			}
+			else Value = cvGet2D(inputImage, source_y, source_x);
+
+			cvSet2D(outputImage, i, j, Value);
+		}
+	}
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("Output Image", outputImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage);
+
+	return 0;
+}
+
+/*팽창, 침식
+
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+#define THRESHOLD 130
+
+int main() {
+	int i, j, n, m, dilationSum = 0, erosionSum = 0;
+
+	CvScalar tempValue;
+	//침식 마스크
+	double erosionMask[3][3] = { { 255,255,255 },{ 255,255,255 },{ 255,255,255 } };
+	//팽창 마스크
+	double dilationMask[3][3] = { { 0,0,0 },{ 0,0,0 },{ 0,0,0 } };
+
+	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage *binaryImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
+	IplImage *tempImage = cvCreateImage(cvSize(inputImage->width + 2, inputImage->height + 2), 8, 1);
+	IplImage *erosionImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
+	IplImage *dilationImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
+
+	//이진화
+	for (i = 0; i < inputImage->height; i++) { // 인풋이미지 temp에 옮김
+		for (j = 0; j < inputImage->width; j++) {
+			tempValue = cvGet2D(inputImage, i, j);
+			if (tempValue.val[0] > THRESHOLD)
+				cvSet2D(binaryImage, i, j, cvScalar(255));
+			else
+				cvSet2D(binaryImage, i, j, cvScalar(0));
+		}
+	}
+
+	//패딩만들기
+	for (i = 0; i < binaryImage->height; i++) { // 인풋이미지 temp에 옮김
+		for (j = 0; j < binaryImage->width; j++) {
+			cvSet2D(tempImage, i + 1, j + 1, cvGet2D(binaryImage, i, j));
+		}
+	}
+
+	//연산
+	//패딩만들기
+	for (i = 0; i < binaryImage->height; i++) { // 인풋이미지 temp에 옮김
+		for (j = 0; j < binaryImage->width; j++) {
+			for (n = 0; n < 3; n++) {
+				for (m = 0; m < 3; m++) {
+					tempValue = cvGet2D(tempImage, i + n, j + m);
+					if (erosionMask[n][m] == tempValue.val[0])
+						erosionSum += 1;
+					if (dilationMask[n][m] == tempValue.val[0])
+						dilationSum += 1;
+				}
+			}
+			if (erosionSum == 9)
+				cvSet2D(erosionImage, i, j, cvScalar(255));
+			else
+				cvSet2D(erosionImage, i, j, cvScalar(0));
+			if (dilationSum == 9)
+				cvSet2D(dilationImage, i, j, cvScalar(0));
+			else
+				cvSet2D(dilationImage, i, j, cvScalar(255));
+
+			dilationSum = 0;
+			erosionSum = 0;
+
+		}
+	}
+
+	cvShowImage("binary Image", binaryImage);
+	cvShowImage("Erosion Image", erosionImage);
+	cvShowImage("Dilation Image", dilationImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&binaryImage);
+	cvReleaseImage(&erosionImage);
+	cvReleaseImage(&dilationImage);
+
+	return 0;
+}
+*/
+
+/*골격화*/
 #include <opencv\cv.h>
 #include <opencv\highgui.h>
 
@@ -355,7 +522,7 @@ IplImage *Dilation(IplImage *binaryImage);
 IplImage *Open(IplImage *binaryImage);
 
 int main() {
-	int i, j, sum= 1;
+	int i, j, sum = 1;
 	CvScalar erostempval, opentempval;
 	bool first = true;
 
@@ -511,12 +678,12 @@ IplImage *Open(IplImage *binaryImage) {
 
 
 IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
-	
+
 	IplImage *tempImage = cvCreateImage(cvSize(grayImage->width, grayImage->height), 8, 1);
 	IplImage *outImage = cvCreateImage(cvSize(grayImage->width, grayImage->height), 8, 1);
 	CvScalar tempValue;
 	int i, j;
-	
+
 
 	for (i = 0; i < grayImage->height; i++) {
 		for (j = 0; j < grayImage->width; j++) {
@@ -531,170 +698,4 @@ IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
 	cvReleaseImage(&tempImage);
 
 	return outImage;
-}
-*/
-/*대칭
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
-int main() {
-	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-	IplImage* outputImage_1 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
-	IplImage* outputImage_2 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
-
-	int i, j;
-
-	for (i = 0; i < inputImage->height; i++) { // 좌우반전
-		for (j = 0; j < inputImage->width; j++) {
-			cvSet2D(outputImage_1, i, inputImage->width - j - 1, cvGet2D(inputImage, i, j));
-		}
-	}
-
-	for (i = 0; i < inputImage->height; i++) { // 상하반전
-		for (j = 0; j < inputImage->width; j++) {
-			cvSet2D(outputImage_2, inputImage->height - i - 1, j, cvGet2D(inputImage, i, j));
-		}
-	}
-
-	cvShowImage("input Image", inputImage);
-	cvShowImage("Output Image1", outputImage_1);
-	cvShowImage("Output Image2", outputImage_2);
-	cvWaitKey();
-
-	cvDestroyAllWindows();
-	cvReleaseImage(&inputImage);
-	cvReleaseImage(&outputImage_1);
-	cvReleaseImage(&outputImage_2);
-
-	return 0;
-}
-*/
-/*회전
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
-#define PI 3.141592
-#define DEGREE 45 // 회전 각도
-
-int main() {
-	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-	IplImage* outputImage = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
-
-	int i, j, Center_y, Center_x, source_y, source_x;
-	double Radian, cosR, sinR;
-	CvScalar Value;
-
-	Radian = (double)DEGREE * PI / 180.0; // degree 값을 radian으로 변경
-
-	cosR = cos(Radian);
-	sinR = sin(Radian);
-
-	Center_y = inputImage->height / 2;
-	Center_x = inputImage->width / 2;
-
-	for (i = 0; i < inputImage->height; i++) { // 좌우반전
-		for (j = 0; j < inputImage->width; j++) {
-			source_x = (int)((j - Center_x)*cosR + (i - Center_y)*sinR + Center_x);
-			source_y = (int)(-(j - Center_x)*sinR + (i - Center_y)*cosR + Center_y);
-
-			if (source_x < 0 || source_y < 0 || source_y >= inputImage->height || source_x >= inputImage->width) {
-				Value.val[0] = 0;
-			}
-			else Value = cvGet2D(inputImage, source_y, source_x);
-
-			cvSet2D(outputImage, i, j, Value);
-		}
-	}
-
-	cvShowImage("input Image", inputImage);
-	cvShowImage("Output Image", outputImage);
-	cvWaitKey();
-
-	cvDestroyAllWindows();
-	cvReleaseImage(&inputImage);
-	cvReleaseImage(&outputImage);
-
-	return 0;
-}
-*/
-
-/*팽창, 침식*/
-
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-
-#define THRESHOLD 130 
-
-int main() {
-	int i, j, n, m, dilationSum = 0, erosionSum = 0;
-
-	CvScalar tempValue;
-	//침식 마스크
-	double erosionMask[3][3] = { { 255,255,255 },{ 255,255,255 },{ 255,255,255 } };
-	//팽창 마스크
-	double dilationMask[3][3] = { { 0,0,0 },{ 0,0,0 },{ 0,0,0 } };
-
-	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-	IplImage *binaryImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
-	IplImage *tempImage = cvCreateImage(cvSize(inputImage->width + 2, inputImage->height + 2), 8, 1);
-	IplImage *erosionImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
-	IplImage *dilationImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
-
-	//이진화
-	for (i = 0; i < inputImage->height; i++) { // 인풋이미지 temp에 옮김
-		for (j = 0; j < inputImage->width; j++) {
-			tempValue = cvGet2D(inputImage, i, j);
-			if (tempValue.val[0] > THRESHOLD)
-				cvSet2D(binaryImage, i, j, cvScalar(255));
-			else
-				cvSet2D(binaryImage, i, j, cvScalar(0));
-		}
-	}
-
-	//패딩만들기
-	for (i = 0; i < binaryImage->height; i++) { // 인풋이미지 temp에 옮김
-		for (j = 0; j < binaryImage->width; j++) {
-			cvSet2D(tempImage, i + 1, j + 1, cvGet2D(binaryImage, i, j));
-		}
-	}
-
-	//연산
-	//패딩만들기
-	for (i = 0; i < binaryImage->height; i++) { // 인풋이미지 temp에 옮김
-		for (j = 0; j < binaryImage->width; j++) {
-			for (n = 0; n < 3; n++) {
-				for (m = 0; m < 3; m++) {
-					tempValue = cvGet2D(tempImage, i + n, j + m);
-					if (erosionMask[n][m] == tempValue.val[0])
-						erosionSum += 1;
-					if (dilationMask[n][m] == tempValue.val[0])
-						dilationSum += 1;
-				}
-			}
-			if (erosionSum == 9)
-				cvSet2D(erosionImage, i, j, cvScalar(255));
-			else
-				cvSet2D(erosionImage, i, j, cvScalar(0));
-			if (dilationSum == 9)
-				cvSet2D(dilationImage, i, j, cvScalar(0));
-			else
-				cvSet2D(dilationImage, i, j, cvScalar(255));
-
-			dilationSum = 0;
-			erosionSum = 0;
-
-		}
-	}
-
-	cvShowImage("binary Image", binaryImage);
-	cvShowImage("Erosion Image", erosionImage);
-	cvShowImage("Dilation Image", dilationImage);
-	cvWaitKey();
-
-	cvDestroyAllWindows();
-	cvReleaseImage(&binaryImage);
-	cvReleaseImage(&erosionImage);
-	cvReleaseImage(&dilationImage);
-
-	return 0;
 }
