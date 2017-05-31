@@ -510,7 +510,7 @@ int main() {
 }
 */
 
-/*골격화*/
+/*골격화
 #include <opencv\cv.h>
 #include <opencv\highgui.h>
 
@@ -698,4 +698,231 @@ IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
 	cvReleaseImage(&tempImage);
 
 	return outImage;
+}
+*/
+
+/*FFT*/
+
+
+#include <opencv\cv.h>
+#include <opencv\highgui.h>
+
+struct Complex {
+	double Re;  // 실수 넘버
+	double lm;  // 이미지 넘버
+};
+
+Complex **FFT;
+
+IplImage* Fft2d(IplImage *inputImage);
+void Fft1d(Complex *X, int N, int Log2N);
+void Scrambling(Complex *X, int N, int Log2N);
+void Butterfly(Complex *X, int N, int Log2N);
+int ReverseBitOrder(int index, int Log2N);
+
+int main() {
+	
+	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage *fftSpectrum;
+
+	fftSpectrum = Fft2d(inputImage);
+	
+	cvShowImage("Input Image", inputImage);
+	cvShowImage("FFT SPECTRUM", fftSpectrum);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&fftSpectrum);
+
+	return 0;
+}
+IplImage* Fft2d(IplImage *inputImage) {
+	int i, j, row, col, Log2N, Num;
+	Complex *Data;
+	
+	unsigned char **temp;
+	double Value, Absol;
+
+	// FT
+	// DFT(컴퓨터용)
+	// FFT(DFT에서 중복된 연산을 지워 더 빠르게 한 것)
+	CvScalar tempScalar;
+
+	IplImage *fftSpectrum = cvCreateImage(cvGetSize(inputImage), 8, 1);
+
+	Num = inputImage->width;
+	Log2N = 0;
+	
+	while(Num >= 2)
+	{
+		Num >>= 1;
+		Log2N++;
+	}
+
+	IplImage *tempImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
+	Data = new Complex[inputImage->width];
+	FFT = new Complex *[inputImage->height];
+	//주파수 영역 변환 영상을 저장하기 위한 배열
+	temp = new unsigned char *[inputImage->height];
+
+	for (i = 0; i < inputImage->height; i++)
+	{
+		FFT[i] = new Complex[inputImage->width];
+		temp[i] = new unsigned char[inputImage->width];
+	}
+
+	for (i = 0; i < inputImage->height; i++)
+	{
+		for (j = 0; j < inputImage->width; j++)
+		{
+			Data[j].Re = (double)inputImage->imageData[i*inputImage->widthStep + j];
+			Data[j].lm = 0.0;
+		}
+		Fft1d(Data, inputImage->width, Log2N);
+
+		for (j = 0; j < inputImage->width; j++) {
+			FFT[i][j].Re = Data[j].Re;
+			FFT[i][j].lm = Data[j].lm;
+		}
+	}
+
+	Num = inputImage->height;
+	Log2N = 0;
+
+	// Image height calculation 영상의 높이 계싼
+	while (Num >= 2)
+	{
+		Num >>= 1;
+		Log2N++;
+	}
+
+	Data = new Complex[inputImage->height];
+
+	for (i = 0; i < inputImage->width; i++)
+	{
+		for (j = 0; j < inputImage->height; j++)
+		{
+			// Copy a row of Images 영상의 한 열을 보사
+			Data[j].Re = FFT[j][i].Re;
+			Data[j].lm = FFT[j][i].lm;
+		}
+
+		//1D FFT 1차원 FFT
+		Fft1d(Data, inputImage->width, Log2N);
+
+		//Save Result
+		for (j = 0; j < inputImage->height; j++) {
+			FFT[j][j].Re = Data[j].Re;
+			FFT[j][i].lm = Data[j].lm;
+		}
+	}
+
+	for (i = 0; i < inputImage->height; i++)
+	{
+		for (j = 0; j < inputImage->width; j++) {
+			Value = sqrt(FFT[i][j].Re * FFT[i][j].Re) + (FFT[i][j].lm *FFT[i][j].lm);
+			Absol = 20 * log(Value);
+
+			if (Absol > 255.0)
+				Absol = 255.0;
+
+			if (Absol < 0.0)
+				Absol = 0.0;
+
+			cvSet2D(tempImage, i, j, cvScalar(Absol));
+		}
+	}
+
+	// 셔플링 과정
+	for (i = 0; i < inputImage->height; i += inputImage->height/2){
+		for (j = 0; j < inputImage->width; j += inputImage->width / 2) {
+			for (row = 0; row < inputImage->height / 2; row++) {
+				for (col = 0; col < inputImage->width / 2; col++) {
+					tempScalar = cvGet2D(tempImage, i + row, j + col);
+					temp[(inputImage->height / 2 - 1) - row + i][(inputImage->width / 2 - 1) - col + j] = (unsigned char)tempScalar.val[0];
+				}
+			}
+		}
+	}
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(fftSpectrum, i, j, cvScalar(temp[i][j]));
+		}
+	}
+
+	delete[]Data, **temp;
+	cvReleaseImage(&tempImage);
+
+	return fftSpectrum;
+}
+
+void Fft1d(Complex *X, int N, int Log2N) {
+	Scrambling(X, N, Log2N);
+	Butterfly(X, N, Log2N);
+}
+
+void Scrambling(Complex *X, int N, int Log2N) {
+	int i;
+	Complex *temp;
+
+	temp = new Complex[N];
+
+	for (i = 0; i < N; i++) {
+		temp[i].Re = X[ReverseBitOrder(i, Log2N)].Re;
+		temp[i].lm = X[ReverseBitOrder(i, Log2N)].lm;
+	}
+	for (i = 0; i < N; i++) {
+		X[i].Re = temp[i].Re;
+		X[i].lm = temp[i].lm;
+	}
+
+	delete[] temp;
+}
+void Butterfly(Complex *X, int N, int Log2N) {
+	int i, j, k, m;
+	int start;
+	double Value;
+	double PI = 3.14159265358979;
+
+	Complex *Y, temp;
+	Y = new Complex[N / 2];
+
+	for (i = 0; i < Log2N; i++) {
+		Value = pow(2., i + 1);
+
+		for (j = 0; j < (int)(Value / 2); j++) {
+			Y[j].Re = cos(j*2.0*PI / Value);
+			Y[j].lm = -sin(j*2.0*PI / Value);
+		}
+		start = 0;
+
+		for (k = 0; k < N / (int)Value; k++) {
+			for (j = start; j < start+(int)(Value / 2); j++) {
+				m = j + (int)(Value / 2);
+				temp.Re = Y[j - start].Re * X[m].Re - Y[j - start].lm * X[m].lm;
+				temp.lm = Y[j - start].lm * X[m].Re + Y[j - start].Re * X[m].lm;
+
+				X[m].Re = X[j].Re - temp.Re;
+				X[m].lm = X[j].lm - temp.lm;
+
+				X[j].Re = X[j].Re + temp.Re;
+				X[j].lm = X[j].lm + temp.lm;
+			}
+			start = start + (int)Value;
+		}
+	}
+	delete[] Y;
+}
+int ReverseBitOrder(int index, int Log2N)
+{
+	int i, X, Y;
+	Y = 0;
+
+
+	for (i = 0; i < Log2N; i++) {
+		X = (index & (1 << i)) >> i;
+		Y = (Y << 1) | X;
+	}
+	return Y;
 }
