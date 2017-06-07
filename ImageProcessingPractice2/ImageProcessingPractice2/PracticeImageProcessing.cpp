@@ -1,4 +1,4 @@
-/*À¯»ç ¿¬»êÀÚ ±â¹ı
+ï»¿/*ìœ ì‚¬ ì—°ì‚°ì ê¸°ë²•
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -20,7 +20,7 @@ int main() {
 	cvReleaseImage(&inputImage);
 }
 
-double ABS(double x) { // Àı´ë°ª ÇÔ¼ö
+double ABS(double x) { // ì ˆëŒ€ê°’ í•¨ìˆ˜
 	if (x >= 0) return x;
 	else return -x;
 }
@@ -33,26 +33,26 @@ IplImage* HomogenProcess(IplImage* inputImage) {
 	double Max = 0.0, temp;
 	CvScalar tempScalar, ceterScalar;
 
-	cvSetZero(tempinputImage); // °æ°èÃ³¸®´Â 0À» »ğÀÔ, tempÀÌ¹ÌÁö °ËÀº»öÀ¸·Î Ã¤¿ò
+	cvSetZero(tempinputImage); // ê²½ê³„ì²˜ë¦¬ëŠ” 0ì„ ì‚½ì…, tempì´ë¯¸ì§€ ê²€ì€ìƒ‰ìœ¼ë¡œ ì±„ì›€
 
-	for (i = 0; i < inputImage->height; i++) { // temp ÀÌ¹ÌÁö¿¡ ÀÎÇ² ÀÌ¹ÌÁö º¹»ç
+	for (i = 0; i < inputImage->height; i++) { // temp ì´ë¯¸ì§€ì— ì¸í’‹ ì´ë¯¸ì§€ ë³µì‚¬
 		for (j = 0; j < inputImage->width; j++) {
 			cvSet2D(tempinputImage, i + 1, j + 1, cvGet2D(inputImage, i, j));
 		}
 	}
 
-	for (i = 0; i < inputImage->height; i++) { // ÄÁ¹ú·ç¼Ç ¿¬»ê
+	for (i = 0; i < inputImage->height; i++) { // ì»¨ë²Œë£¨ì…˜ ì—°ì‚°
 		for (j = 0; j < inputImage->width; j++) {
 			ceterScalar = cvGet2D(tempinputImage, i + 1, j + 1);
 			for (n = 0; n < 3; n++) {
-				for (m = 0; m < 3; m++) { // ¸¶½ºÅ©¿Í ¿¬»êÇÏ¸é¼­ Sum¿¡ ´©Àû
-					tempScalar = cvGet2D(tempinputImage, i + n, j + m); // ÀÌ¿ô°ª
-					temp = ABS(ceterScalar.val[0] - tempScalar.val[0]); // ÀÌ¿ô °ªµé°úÀÇ Â÷¸¦ ±¸ÇÑµÚ Àı´ë°ª
+				for (m = 0; m < 3; m++) { // ë§ˆìŠ¤í¬ì™€ ì—°ì‚°í•˜ë©´ì„œ Sumì— ëˆ„ì 
+					tempScalar = cvGet2D(tempinputImage, i + n, j + m); // ì´ì›ƒê°’
+					temp = ABS(ceterScalar.val[0] - tempScalar.val[0]); // ì´ì›ƒ ê°’ë“¤ê³¼ì˜ ì°¨ë¥¼ êµ¬í•œë’¤ ì ˆëŒ€ê°’
 					if (Max < temp)
-						Max = temp; // ÃÖ´ë°ª
+						Max = temp; // ìµœëŒ€ê°’
 				}
 			}
-			cvSet2D(outputImage, i, j, cvScalar(Max)); // °á°ú°ªÀ» ¾Æ¿ôÇ² ÀÌ¹ÌÁö¿¡ ³ÖÀ½
+			cvSet2D(outputImage, i, j, cvScalar(Max)); // ê²°ê³¼ê°’ì„ ì•„ì›ƒí’‹ ì´ë¯¸ì§€ì— ë„£ìŒ
 			Max = 0.0;
 		}
 	}
@@ -61,7 +61,7 @@ IplImage* HomogenProcess(IplImage* inputImage) {
 	return outputImage;
 }
 */
-/*¶óÇÃ¶ó½Ã¾È
+/*ë¼í”Œë¼ì‹œì•ˆ
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -72,7 +72,7 @@ int main() {
 	IplImage* LaplaImage_1 = NULL;
 	IplImage* LaplaImage_2 = NULL;
 
-	double LaplaMask_1[3][3] = { { 0.,-1.,-0. },{ -1.,4.,-1. },{ 0.,-1.,0. } }; // ¶óÇÃ¶ó½Ã¾È
+	double LaplaMask_1[3][3] = { { 0.,-1.,-0. },{ -1.,4.,-1. },{ 0.,-1.,0. } }; // ë¼í”Œë¼ì‹œì•ˆ
 	double LaplaMask_2[3][3] = { { -1.,-1.,-1. },{ -1.,8.,-1. },{ -1.,-1.,-1. } };
 
 	LaplaImage_1 = ConvolutionProcess(inputImage, LaplaMask_1);
@@ -98,23 +98,23 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	double Sum = 0.0;
 	CvScalar tempScalar;
 
-	cvSetZero(tempinputImage); // °æ°èÃ³¸®´Â 0À» »ğÀÔ, tempÀÌ¹ÌÁö °ËÀº»öÀ¸·Î Ã¤¿ò
+	cvSetZero(tempinputImage); // ê²½ê³„ì²˜ë¦¬ëŠ” 0ì„ ì‚½ì…, tempì´ë¯¸ì§€ ê²€ì€ìƒ‰ìœ¼ë¡œ ì±„ì›€
 
-	for (i = 0; i < inputImage->height; i++) { // temp ÀÌ¹ÌÁö¿¡ ÀÎÇ² ÀÌ¹ÌÁö º¹»ç
+	for (i = 0; i < inputImage->height; i++) { // temp ì´ë¯¸ì§€ì— ì¸í’‹ ì´ë¯¸ì§€ ë³µì‚¬
 		for (j = 0; j < inputImage->width; j++) {
 			cvSet2D(tempinputImage, i + 1, j + 1, cvGet2D(inputImage, i, j));
 		}
 	}
 
-	for (i = 0; i < inputImage->height; i++) { // ÄÁ¹ú·ç¼Ç ¿¬»ê
+	for (i = 0; i < inputImage->height; i++) { // ì»¨ë²Œë£¨ì…˜ ì—°ì‚°
 		for (j = 0; j < inputImage->width; j++) {
 			for (n = 0; n < 3; n++) {
-				for (m = 0; m < 3; m++) { // ¸¶½ºÅ©¿Í ¿¬»êÇÏ¸é¼­ Sum¿¡ ´©Àû
+				for (m = 0; m < 3; m++) { // ë§ˆìŠ¤í¬ì™€ ì—°ì‚°í•˜ë©´ì„œ Sumì— ëˆ„ì 
 					tempScalar = cvGet2D(tempinputImage, i + n, j + m);
 					Sum += Mask[n][m] * tempScalar.val[0];
 				}
 			}
-			cvSet2D(outputImage, i, j, cvScalar(Sum)); // °á°ú°ªÀ» ¾Æ¿ôÇ² ÀÌ¹ÌÁö¿¡ ³ÖÀ½
+			cvSet2D(outputImage, i, j, cvScalar(Sum)); // ê²°ê³¼ê°’ì„ ì•„ì›ƒí’‹ ì´ë¯¸ì§€ì— ë„£ìŒ
 			Sum = 0.0;
 		}
 	}
@@ -123,18 +123,18 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	return outputImage;
 }
 */
-/*Canny ¿¡Áö °ËÃâ
+/*Canny ì—ì§€ ê²€ì¶œ
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#define LOW_THRESHOLD 30 // HIGH¸¦ LOWÀÇ 2~3¹è·Î »ç¿ëÇÏ´Â °ÍÀ» ±ÇÀå
+#define LOW_THRESHOLD 30 // HIGHë¥¼ LOWì˜ 2~3ë°°ë¡œ ì‚¬ìš©í•˜ëŠ” ê²ƒì„ ê¶Œì¥
 #define HIGH_THRESHOLD 30 * 2.5
 
 int main() {
 	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	IplImage* CannyEdgeImage = cvCreateImage(cvGetSize(inputImage), inputImage->depth, inputImage->nChannels);
 
-	cvCanny(inputImage, CannyEdgeImage, LOW_THRESHOLD, HIGH_THRESHOLD); // ÄÉ´Ï ÇÔ¼ö
+	cvCanny(inputImage, CannyEdgeImage, LOW_THRESHOLD, HIGH_THRESHOLD); // ì¼€ë‹ˆ í•¨ìˆ˜
 
 	cvShowImage("input Image", inputImage);
 	cvShowImage("CannyEdge Image", CannyEdgeImage);
@@ -154,23 +154,23 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	double Sum = 0.0;
 	CvScalar tempScalar;
 
-	cvSetZero(tempinputImage); // °æ°èÃ³¸®´Â 0À» »ğÀÔ, tempÀÌ¹ÌÁö °ËÀº»öÀ¸·Î Ã¤¿ò
+	cvSetZero(tempinputImage); // ê²½ê³„ì²˜ë¦¬ëŠ” 0ì„ ì‚½ì…, tempì´ë¯¸ì§€ ê²€ì€ìƒ‰ìœ¼ë¡œ ì±„ì›€
 
-	for (i = 0; i < inputImage->height; i++) { // temp ÀÌ¹ÌÁö¿¡ ÀÎÇ² ÀÌ¹ÌÁö º¹»ç
+	for (i = 0; i < inputImage->height; i++) { // temp ì´ë¯¸ì§€ì— ì¸í’‹ ì´ë¯¸ì§€ ë³µì‚¬
 		for (j = 0; j < inputImage->width; j++) {
 			cvSet2D(tempinputImage, i + 1, j + 1, cvGet2D(inputImage, i, j));
 		}
 	}
 
-	for (i = 0; i < inputImage->height; i++) { // ÄÁ¹ú·ç¼Ç ¿¬»ê
+	for (i = 0; i < inputImage->height; i++) { // ì»¨ë²Œë£¨ì…˜ ì—°ì‚°
 		for (j = 0; j < inputImage->width; j++) {
 			for (n = 0; n < 3; n++) {
-				for (m = 0; m < 3; m++) { // ¸¶½ºÅ©¿Í ¿¬»êÇÏ¸é¼­ Sum¿¡ ´©Àû
+				for (m = 0; m < 3; m++) { // ë§ˆìŠ¤í¬ì™€ ì—°ì‚°í•˜ë©´ì„œ Sumì— ëˆ„ì 
 					tempScalar = cvGet2D(tempinputImage, i + n, j + m);
 					Sum += Mask[n][m] * tempScalar.val[0];
 				}
 			}
-			cvSet2D(outputImage, i, j, cvScalar(Sum)); // °á°ú°ªÀ» ¾Æ¿ôÇ² ÀÌ¹ÌÁö¿¡ ³ÖÀ½
+			cvSet2D(outputImage, i, j, cvScalar(Sum)); // ê²°ê³¼ê°’ì„ ì•„ì›ƒí’‹ ì´ë¯¸ì§€ì— ë„£ìŒ
 			Sum = 0.0;
 		}
 	}
@@ -179,7 +179,7 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	return outputImage;
 }
 */
-/*·Î¹öÃ÷ ¸¶½ºÅ©
+/*ë¡œë²„ì¸  ë§ˆìŠ¤í¬
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -191,24 +191,24 @@ int main() {
 	IplImage* RowImage = NULL;
 	IplImage* ColImage = NULL;
 
-	//double RowMask[3][3] = { {-1.,0.,0.},{0.,1.,0.},{0.,0.,0.} }; // ·Î¹öÃ÷
+	//double RowMask[3][3] = { {-1.,0.,0.},{0.,1.,0.},{0.,0.,0.} }; // ë¡œë²„ì¸ 
 	//double ColMask[3][3] = { {0.,0.,-1.},{0.,1.,0.},{0.,0.,0.} };
-	//double freeRowMask[3][3] = { {-1.,-1.,-1.},{0.,0.,0.},{1.,1.,1.} }; // ÇÁ¸®À­
+	//double freeRowMask[3][3] = { {-1.,-1.,-1.},{0.,0.,0.},{1.,1.,1.} }; // í”„ë¦¬ìœ—
 	//double freeColMask[3][3] = { {1.,0.,-1.},{1.,0.,-1.},{1.,0.,-1.} };
-	double soRowMask[3][3] = { { -1.,-2.,-1 },{ 0.,0.,0. },{ 1.,2.,1. } }; // ¼Òº§
+	double soRowMask[3][3] = { { -1.,-2.,-1 },{ 0.,0.,0. },{ 1.,2.,1. } }; // ì†Œë²¨
 	double soColMask[3][3] = { { 1.,0.,-1. },{ 2.,0.,-2. },{ 1.,0.,-1. } };
 
 	int i, j;
 	CvScalar horizontemp, vertical;
 
-	//RowImage = ConvolutionProcess(inputImage, RowMask); // ·Î¹öÃ÷
+	//RowImage = ConvolutionProcess(inputImage, RowMask); // ë¡œë²„ì¸ 
 	//ColImage = ConvolutionProcess(inputImage, ColMask);
-	//RowImage = ConvolutionProcess(inputImage, freeRowMask); // ÇÁ¸®À­
+	//RowImage = ConvolutionProcess(inputImage, freeRowMask); // í”„ë¦¬ìœ—
 	//ColImage = ConvolutionProcess(inputImage, freeColMask);
-	RowImage = ConvolutionProcess(inputImage, soRowMask); // ¼Òº§
+	RowImage = ConvolutionProcess(inputImage, soRowMask); // ì†Œë²¨
 	ColImage = ConvolutionProcess(inputImage, soColMask);
 
-	cvOr(RowImage, ColImage, SumImage); // µÎ°³ ÀÌ¹ÌÁö ÇÕÄ¡´Â ÇÔ¼ö
+	cvOr(RowImage, ColImage, SumImage); // ë‘ê°œ ì´ë¯¸ì§€ í•©ì¹˜ëŠ” í•¨ìˆ˜
 
 	cvShowImage("input Image", inputImage);
 	cvShowImage("RowEdge Image", RowImage);
@@ -232,23 +232,23 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	double Sum = 0.0;
 	CvScalar tempScalar;
 
-	cvSetZero(tempinputImage); // °æ°èÃ³¸®´Â 0À» »ğÀÔ, tempÀÌ¹ÌÁö °ËÀº»öÀ¸·Î Ã¤¿ò
+	cvSetZero(tempinputImage); // ê²½ê³„ì²˜ë¦¬ëŠ” 0ì„ ì‚½ì…, tempì´ë¯¸ì§€ ê²€ì€ìƒ‰ìœ¼ë¡œ ì±„ì›€
 
-	for (i = 0; i < inputImage->height; i++) { // temp ÀÌ¹ÌÁö¿¡ ÀÎÇ² ÀÌ¹ÌÁö º¹»ç
+	for (i = 0; i < inputImage->height; i++) { // temp ì´ë¯¸ì§€ì— ì¸í’‹ ì´ë¯¸ì§€ ë³µì‚¬
 		for (j = 0; j < inputImage->width; j++) {
 			cvSet2D(tempinputImage, i + 1, j + 1, cvGet2D(inputImage, i, j));
 		}
 	}
 
-	for (i = 0; i < inputImage->height; i++) { // ÄÁ¹ú·ç¼Ç ¿¬»ê
+	for (i = 0; i < inputImage->height; i++) { // ì»¨ë²Œë£¨ì…˜ ì—°ì‚°
 		for (j = 0; j < inputImage->width; j++) {
 			for (n = 0; n < 3; n++) {
-				for (m = 0; m < 3; m++) { // ¸¶½ºÅ©¿Í ¿¬»êÇÏ¸é¼­ Sum¿¡ ´©Àû
+				for (m = 0; m < 3; m++) { // ë§ˆìŠ¤í¬ì™€ ì—°ì‚°í•˜ë©´ì„œ Sumì— ëˆ„ì 
 					tempScalar = cvGet2D(tempinputImage, i + n, j + m);
 					Sum += Mask[n][m] * tempScalar.val[0];
 				}
 			}
-			cvSet2D(outputImage, i, j, cvScalar(Sum)); // °á°ú°ªÀ» ¾Æ¿ôÇ² ÀÌ¹ÌÁö¿¡ ³ÖÀ½
+			cvSet2D(outputImage, i, j, cvScalar(Sum)); // ê²°ê³¼ê°’ì„ ì•„ì›ƒí’‹ ì´ë¯¸ì§€ì— ë„£ìŒ
 			Sum = 0.0;
 		}
 	}
@@ -257,7 +257,7 @@ IplImage* ConvolutionProcess(IplImage* inputImage, double Mask[3][3]) {
 	return outputImage;
 }
 */
-/*ÀÌµ¿
+/*ì´ë™
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -290,7 +290,7 @@ int main() {
 }
 */
 
-/*°íÁÖÆÄ Åë°ú ÇÊÅÍ¸µ
+/*ê³ ì£¼íŒŒ í†µê³¼ í•„í„°ë§
 #include <opencv\cv.h>
 #include <opencv\highgui.h>
 
@@ -344,7 +344,7 @@ int main() {
 }
 */
 
-/*´ëÄª
+/*ëŒ€ì¹­
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -355,13 +355,13 @@ int main() {
 
 	int i, j;
 
-	for (i = 0; i < inputImage->height; i++) { // ÁÂ¿ì¹İÀü
+	for (i = 0; i < inputImage->height; i++) { // ì¢Œìš°ë°˜ì „
 		for (j = 0; j < inputImage->width; j++) {
 			cvSet2D(outputImage_1, i, inputImage->width - j - 1, cvGet2D(inputImage, i, j));
 		}
 	}
 
-	for (i = 0; i < inputImage->height; i++) { // »óÇÏ¹İÀü
+	for (i = 0; i < inputImage->height; i++) { // ìƒí•˜ë°˜ì „
 		for (j = 0; j < inputImage->width; j++) {
 			cvSet2D(outputImage_2, inputImage->height - i - 1, j, cvGet2D(inputImage, i, j));
 		}
@@ -380,12 +380,12 @@ int main() {
 	return 0;
 }
 */
-/*È¸Àü
+/*íšŒì „
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
 #define PI 3.141592
-#define DEGREE 90 // È¸Àü °¢µµ
+#define DEGREE 90 // íšŒì „ ê°ë„
 
 int main() {
 	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
@@ -395,7 +395,7 @@ int main() {
 	double Radian, cosR, sinR;
 	CvScalar Value;
 
-	Radian = (double)DEGREE * PI / 180.0; // degree °ªÀ» radianÀ¸·Î º¯°æ
+	Radian = (double)DEGREE * PI / 180.0; // degree ê°’ì„ radianìœ¼ë¡œ ë³€ê²½
 
 	cosR = cos(Radian);
 	sinR = sin(Radian);
@@ -403,7 +403,7 @@ int main() {
 	Center_y = inputImage->height / 2;
 	Center_x = inputImage->width / 2;
 
-	for (i = 0; i < inputImage->height; i++) { // ÁÂ¿ì¹İÀü
+	for (i = 0; i < inputImage->height; i++) { // ì¢Œìš°ë°˜ì „
 		for (j = 0; j < inputImage->width; j++) {
 			source_x = (int)((j - Center_x)*cosR + (i - Center_y)*sinR + Center_x);
 			source_y = (int)(-(j - Center_x)*sinR + (i - Center_y)*cosR + Center_y);
@@ -428,7 +428,7 @@ int main() {
 	return 0;
 }
 
-/*ÆØÃ¢, Ä§½Ä
+/*íŒ½ì°½, ì¹¨ì‹
 
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -439,9 +439,9 @@ int main() {
 	int i, j, n, m, dilationSum = 0, erosionSum = 0;
 
 	CvScalar tempValue;
-	//Ä§½Ä ¸¶½ºÅ©
+	//ì¹¨ì‹ ë§ˆìŠ¤í¬
 	double erosionMask[3][3] = { { 255,255,255 },{ 255,255,255 },{ 255,255,255 } };
-	//ÆØÃ¢ ¸¶½ºÅ©
+	//íŒ½ì°½ ë§ˆìŠ¤í¬
 	double dilationMask[3][3] = { { 0,0,0 },{ 0,0,0 },{ 0,0,0 } };
 
 	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
@@ -450,8 +450,8 @@ int main() {
 	IplImage *erosionImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
 	IplImage *dilationImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
 
-	//ÀÌÁøÈ­
-	for (i = 0; i < inputImage->height; i++) { // ÀÎÇ²ÀÌ¹ÌÁö temp¿¡ ¿Å±è
+	//ì´ì§„í™”
+	for (i = 0; i < inputImage->height; i++) { // ì¸í’‹ì´ë¯¸ì§€ tempì— ì˜®ê¹€
 		for (j = 0; j < inputImage->width; j++) {
 			tempValue = cvGet2D(inputImage, i, j);
 			if (tempValue.val[0] > THRESHOLD)
@@ -461,16 +461,16 @@ int main() {
 		}
 	}
 
-	//ÆĞµù¸¸µé±â
-	for (i = 0; i < binaryImage->height; i++) { // ÀÎÇ²ÀÌ¹ÌÁö temp¿¡ ¿Å±è
+	//íŒ¨ë”©ë§Œë“¤ê¸°
+	for (i = 0; i < binaryImage->height; i++) { // ì¸í’‹ì´ë¯¸ì§€ tempì— ì˜®ê¹€
 		for (j = 0; j < binaryImage->width; j++) {
 			cvSet2D(tempImage, i + 1, j + 1, cvGet2D(binaryImage, i, j));
 		}
 	}
 
-	//¿¬»ê
-	//ÆĞµù¸¸µé±â
-	for (i = 0; i < binaryImage->height; i++) { // ÀÎÇ²ÀÌ¹ÌÁö temp¿¡ ¿Å±è
+	//ì—°ì‚°
+	//íŒ¨ë”©ë§Œë“¤ê¸°
+	for (i = 0; i < binaryImage->height; i++) { // ì¸í’‹ì´ë¯¸ì§€ tempì— ì˜®ê¹€
 		for (j = 0; j < binaryImage->width; j++) {
 			for (n = 0; n < 3; n++) {
 				for (m = 0; m < 3; m++) {
@@ -510,7 +510,7 @@ int main() {
 }
 */
 
-/*°ñ°İÈ­
+/*ê³¨ê²©í™”
 #include <opencv\cv.h>
 #include <opencv\highgui.h>
 
@@ -701,13 +701,13 @@ IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
 }
 */
 
-/*FFT & ¿ªFFT
+/*FFT & ì—­FFT
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
 struct Complex {
-	double Re; //Variables for real numbers ½Ç¼öºÎ
-	double Im; //Variables for imaginary numbers Çã¼öºÎ
+	double Re; //Variables for real numbers ì‹¤ìˆ˜ë¶€
+	double Im; //Variables for imaginary numbers í—ˆìˆ˜ë¶€
 };
 
 Complex **FFT; //Pointer to save FFT result
@@ -728,7 +728,7 @@ int main()
 	IplImage* RFFTImage;
 
 	FFTSpectrum = FFT2d(inputImage); //Fast Fourier Transform
-	RFFTImage = RFFT2d(FFTSpectrum); // Reverse ¿ª¹æÇâ FFT
+	RFFTImage = RFFT2d(FFTSpectrum); // Reverse ì—­ë°©í–¥ FFT
 
 	cvShowImage("Input Image", inputImage);
 	cvShowImage("FFT Spectrum", FFTSpectrum);
@@ -757,7 +757,7 @@ IplImage* FFT2d(IplImage* inputImage)
 	Num = inputImage->width;
 	Log2N = 0;
 
-	while (Num >= 2) //image Width calculation  ¿µ»óÀÇ ³Êºñ °è»ê
+	while (Num >= 2) //image Width calculation  ì˜ìƒì˜ ë„ˆë¹„ ê³„ì‚°
 	{
 		Num >>= 1;
 		Log2N++;
@@ -769,7 +769,7 @@ IplImage* FFT2d(IplImage* inputImage)
 
 	FFT = new Complex *[inputImage->height];
 	//Arrangement for storing frequency-domain transformed images
-	//ÁÖÆÄ¼ö ¿µ¿ª º¯È¯ ¿µ»óÀ» ÀúÀåÇÏ±â À§ÇÑ ¹è¿­
+	//ì£¼íŒŒìˆ˜ ì˜ì—­ ë³€í™˜ ì˜ìƒì„ ì €ì¥í•˜ê¸° ìœ„í•œ ë°°ì—´
 	temp = new unsigned char *[inputImage->height];
 
 	for (i = 0; i<inputImage->height; i++) {
@@ -782,10 +782,10 @@ IplImage* FFT2d(IplImage* inputImage)
 		{
 			Data[j].Re = (double)inputImage->imageData[i*inputImage->widthStep + j];
 			// copy one row of input, the real component value is the value of the image
-			//ÀÔ·ÂÀÇ ÇÑ ÇàÀ» º¹»ç, ½Ç¼ö ¼ººĞ °ªÀº ¿µ»óÀÇ °ª
-			Data[j].Im = 0.0; //The complex component value is 0 º¹¼Ò ¼ººĞ °ªÀº 0
+			//ì…ë ¥ì˜ í•œ í–‰ì„ ë³µì‚¬, ì‹¤ìˆ˜ ì„±ë¶„ ê°’ì€ ì˜ìƒì˜ ê°’
+			Data[j].Im = 0.0; //The complex component value is 0 ë³µì†Œ ì„±ë¶„ ê°’ì€ 0
 		}
-		FFT1d(Data, inputImage->width, Log2N); //1D FFT 1Â÷¿ø FFT
+		FFT1d(Data, inputImage->width, Log2N); //1D FFT 1ì°¨ì› FFT
 
 		for (j = 0; j<inputImage->width; j++) { //Save Results
 			FFT[i][j].Re = Data[j].Re;
@@ -796,7 +796,7 @@ IplImage* FFT2d(IplImage* inputImage)
 	Num = inputImage->height;
 	Log2N = 0;
 
-	while (Num >= 2) //Image height calculation ¿µ»óÀÇ ³ôÀÌ °è»ê
+	while (Num >= 2) //Image height calculation ì˜ìƒì˜ ë†’ì´ ê³„ì‚°
 	{
 		Num >>= 1;
 		Log2N++;
@@ -806,11 +806,11 @@ IplImage* FFT2d(IplImage* inputImage)
 
 	for (i = 0; i<inputImage->width; i++) {
 		for (j = 0; j<inputImage->height; j++) {
-			Data[j].Re = FFT[j][i].Re; //Copy a row of images ¿µ»óÀÇ ÇÑ ¿­À» º¹»ç
+			Data[j].Re = FFT[j][i].Re; //Copy a row of images ì˜ìƒì˜ í•œ ì—´ì„ ë³µì‚¬
 			Data[j].Im = FFT[j][i].Im;
 		}
 
-		FFT1d(Data, inputImage->height, Log2N); //1D FFT 1Â÷¿ø FFT
+		FFT1d(Data, inputImage->height, Log2N); //1D FFT 1ì°¨ì› FFT
 
 		for (j = 0; j<inputImage->height; j++) { //Save Results
 			FFT[j][i].Re = Data[j].Re;
@@ -831,7 +831,7 @@ IplImage* FFT2d(IplImage* inputImage)
 			cvSet2D(tempImage, i, j, cvScalar(Absol));
 		}
 	}
-	//shuffling process ¼ÅÇÃ¸µ °úÁ¤
+	//shuffling process ì…”í”Œë§ ê³¼ì •
 	for (i = 0; i<inputImage->height; i += inputImage->height / 2) {
 		for (j = 0; j<inputImage->width; j += inputImage->width / 2) {
 			for (row = 0; row<inputImage->height / 2; row++) {
@@ -961,27 +961,27 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 	Num = FFTSpectrum->width;
 	Log2N = 0;
 	while (Num >= 2) //Calculating the width of a frequency-converted image
-	{			//ÁÖÆÄ¼ö º¯È¯µÈ ¿µ»óÀÇ ³Êºñ °è»ê
+	{			//ì£¼íŒŒìˆ˜ ë³€í™˜ëœ ì˜ìƒì˜ ë„ˆë¹„ ê³„ì‚°
 		Num >>= 1;
 		Log2N++;
 	}
 
 	Data = new Complex[FFTSpectrum->height];
 	RFFT = new Complex *[FFTSpectrum->height]; //Arrangement for an inversely transformed image
-											   //¿ªº¯È¯µÈ ¿µ»óÀ» À§ÇÑ ¹è¿­
+											   //ì—­ë³€í™˜ëœ ì˜ìƒì„ ìœ„í•œ ë°°ì—´
 	for (i = 0; i<FFTSpectrum->height; i++) {
 		RFFT[i] = new Complex[FFTSpectrum->width];
 	}
 
 	for (i = 0; i<FFTSpectrum->height; i++) {
-		for (j = 0; j<FFTSpectrum->width; j++) { //Copy one row ÇÑ ÇàÀ» º¹»ç
+		for (j = 0; j<FFTSpectrum->width; j++) { //Copy one row í•œ í–‰ì„ ë³µì‚¬
 			Data[j].Re = FFT[i][j].Re;
 			Data[j].Im = FFT[i][j].Im;
 		}
 		RFFT1d(Data, FFTSpectrum->width, Log2N); //1D RFFT
 
 		for (j = 0; j<FFTSpectrum->width; j++) {
-			RFFT[i][j].Re = Data[j].Re; //Save Results °á°ú ÀúÀå
+			RFFT[i][j].Re = Data[j].Re; //Save Results ê²°ê³¼ ì €ì¥
 			RFFT[i][j].Im = Data[j].Im;
 		}
 	}
@@ -989,7 +989,7 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 	Num = FFTSpectrum->height;
 	Log2N = 0;
 	while (Num >= 2) //Calculation of height of frequency converted image
-	{			//ÁÖÆÄ¼ö º¯È¯µÈ ¿µ»óÀÇ ³ôÀÌ °è»ê
+	{			//ì£¼íŒŒìˆ˜ ë³€í™˜ëœ ì˜ìƒì˜ ë†’ì´ ê³„ì‚°
 		Num >>= 1;
 		Log2N++;
 	}
@@ -998,13 +998,13 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 
 	for (i = 0; i< FFTSpectrum->width; i++) {
 		for (j = 0; j<FFTSpectrum->height; j++) {
-			Data[j].Re = RFFT[j][i].Re; //Copy one column ÇÑ ¿­À» º¹»ç
+			Data[j].Re = RFFT[j][i].Re; //Copy one column í•œ ì—´ì„ ë³µì‚¬
 			Data[j].Im = RFFT[j][i].Im;
 		}
 
 		RFFT1d(Data, FFTSpectrum->width, Log2N); //1D RFFT
 
-		for (j = 0; j< FFTSpectrum->width; j++) {//Save Results °á°ú ÀúÀå
+		for (j = 0; j< FFTSpectrum->width; j++) {//Save Results ê²°ê³¼ ì €ì¥
 			RFFT[j][i].Re = Data[j].Re;
 			RFFT[j][i].Im = Data[j].Im;
 		}
@@ -1026,8 +1026,8 @@ void RFFT1d(Complex *X, int N, int Log2N)
 }
 */
 
-// wavelet º¯È¯
-#include <opencv/cv.h>
+// wavelet ë³€í™˜
+/*#include <opencv/cv.h>
 #include <opencv/highgui.h>
 
 double *DWT_1D(double *data, int len);
@@ -1107,4 +1107,253 @@ double *DWT_1D(double *data, int len) {
 
 	}
 	return temp;
+}*/
+
+
+// wavelet ï¿½ï¿½È¯
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+double *DWT_1D(double *data, int len);
+IplImage *DWT_2D(IplImage *inputImage, int iterations);
+double *IDWT_1D(double *data, int len);
+IplImage *IDWT_2D(IplImage *inputImage, int iterations);
+double **OnScale(double **img, int h, int w);
+
+int main()
+{
+	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* DWTimg;
+	IplImage* IDWTimg;
+
+	DWTimg = DWT_2D(inputImage, 1);
+	IDWTimg = IDWT_2D(DWTimg, 1);
+
+	cvShowImage("Input Image", inputImage);
+	cvShowImage("DWT image", DWTimg);
+	cvShowImage("IDWT image", IDWTimg);
+
+	cvWaitKey();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&DWTimg);
+	cvReleaseImage(&IDWTimg);
+
+	return 0;
+}
+
+IplImage *DWT_2D(IplImage *inputImage, int iterations)
+{
+	IplImage *outImg = cvCreateImage(cvGetSize(inputImage), 8, 1);
+	IplImage *tempImg = cvCreateImage(cvGetSize(inputImage), 8, 1);
+
+	int rows = inputImage->height;
+	int cols = inputImage->width;
+
+	int i, j, k, levCols, levRows, lev;
+	double*data;
+	double**imgData;
+
+	for (int i = 0; i < inputImage->height; i++) {
+		for (int j = 0; j < inputImage->width; j++) {
+			cvSet2D(outImg, i, j, cvGet2D(inputImage, i, j));
+		}
+	}
+	imgData = new double *[inputImage->height];
+
+	for (k = 0; k < iterations; k++) {
+		lev = 1 << k;
+		levCols = cols / lev;
+		levRows = rows / lev;
+		imgData = new double *[levRows];
+		data = new double[levCols];
+
+		for (int i = 0; i < levRows; i++) {
+			for (int j = 0; j < levCols; j++)
+				data[j] = cvGet2D(outImg, i, j).val[0];
+			imgData[i] = DWT_1D(data, levCols);
+		}
+
+		data = new double[levRows];
+		for (i = 0; i < levCols; i++) {
+			for (j = 0; j < levRows; j++) {
+				data[j] = imgData[j][i];
+			}
+			data = DWT_1D(data, levCols);
+			for (j = 0; j < levCols; j++) {
+				imgData[j][i] = data[j];
+			}
+		}
+
+		imgData = OnScale(imgData, levRows, levCols);
+		for (i = 0; i < levRows; i++)
+			for (j = 0; j < levCols; j++) {
+				cvSet2D(outImg, i, j, cvScalar(imgData[i][j]));
+			}
+	}
+	return outImg;
+}
+
+
+double *DWT_1D(double *data, int len) {
+	double LPF[2] = { 0.50710678118655, 0.50710678118655 };
+	double HPF[2] = { 0.70710678118655, -0.70710678118655 };
+
+	double *temp = new double[len];
+	int i;
+
+	for (i = 0; i < len / 2; i++) {
+		temp[i] = data[2 * i] * LPF[0] + data[2 * i + 1] * LPF[1];
+		temp[len / 2 + i] = data[2 * i] * HPF[0] + data[2 * i + 1] * HPF[1];
+
+	}
+	return temp;
+}
+double *IDWT_1D(double *data, int len) {
+	double LPF[2] = { 0.70710678118655, 0.70710678118655 };
+	double HPF[2] = { 0.70710678118655, -0.70710678118655 };
+
+	double *sortData = new double[len];
+	double *temp = new double[len];
+	int i;
+
+	for (i = 0; i < len / 2; i++) {
+		sortData[i * 2] = data[i];
+		sortData[i * 2 + 1] = data[len / 2 + i];
+	}
+	for (i = 0; i < len / 2; i++) {
+		temp[2 * i] = sortData[2 * i] * LPF[0] + sortData[2 * i + 1] * LPF[1];
+		temp[2 * i + 1] = sortData[2 * i] * HPF[0] + sortData[2 * i + 1] * HPF[1];
+	}
+
+	return temp;
+}
+IplImage *IDWT_2D(IplImage *inputImage, int iterations) {
+	IplImage *outImg = cvCreateImage(cvGetSize(inputImage), 8, 1);
+
+	int rows = inputImage->height;
+	int cols = inputImage->width;
+
+	int i, j, k, levCols, levRows, lev;
+	double*data;
+
+	for (int i = 0; i < inputImage->height; i++) {
+		for (int j = 0; j < inputImage->width; j++) {
+			cvSet2D(outImg, i, j, cvGet2D(inputImage, i, j));
+		}
+	}
+
+	for (k = iterations; k > 0; k--) {
+		lev = 1 << k - 1;
+
+		levCols = cols / lev;
+		levRows = rows / lev;
+		data = new double[levCols];
+
+		for (int i = 0; i < levRows; i++) {
+			for (int j = 0; j < levCols; j++)
+				data[j] = cvGet2D(outImg, i, j).val[0];
+
+			data = IDWT_1D(data, levCols);
+
+			for (int j = 0; j < levCols; j++)
+				cvSet2D(outImg, i, j, cvScalar(data[j]));
+		}
+
+		data = new double[levRows];
+		for (i = 0; i < levCols; i++) {
+			for (j = 0; j < levRows; j++)
+				data[j] = cvGet2D(outImg, j,i).val[0];
+
+			data = IDWT_1D(data, levCols);
+			for (j = 0; j < levCols; j++)
+				cvSet2D(outImg, j, i, cvScalar(data[j]));
+		}
+
+	}
+	return outImg;
+}
+double **OnScale(double **inputImage, int height, int width) {
+	double max, min;
+	int i, j;
+
+	min = max = inputImage[0][0];
+	for (i = 0; i < height / 2; i++) {
+		for (j = 0; j < width / 2; j++) {
+			if (inputImage[i][j] <= min) {
+				min = inputImage[i][j];
+			}
+			if (inputImage[i][j] >= max) {
+				max = inputImage[i][j];
+			}
+		}
+	}
+
+	max = max - min;
+	for (i = 0; i < height / 2; i++) {
+		for (j = 0; j < width / 2; j++) {
+			inputImage[i][j] = (inputImage[i][j] - min) * 255 / max;
+		}
+	}
+
+	min = max = inputImage[0][0];
+	for (i = 0; i < height / 2; i++) {
+		for (j = width / 2; j < width; j++) {
+			if (inputImage[i][j] <= min) {
+				min = inputImage[i][j];
+			}
+			if (inputImage[i][j] >= max) {
+				max = inputImage[i][j];
+			}
+		}
+	}
+
+	max = max - min;
+	for (i = 0; i < height; i++) {
+		for (j = width / 2; j < width; j++) {
+			inputImage[i][j] = (inputImage[i][j] - min) * 255 / max;
+		}
+	}
+
+
+	min = max = inputImage[0][0];
+	for (i = height / 2; i < height; i++) {
+		for (j = 0; j < width; j++) {
+			if (inputImage[i][j] <= min) {
+				min = inputImage[i][j];
+			}
+			if (inputImage[i][j] >= max) {
+				max = inputImage[i][j];
+			}
+		}
+	}
+
+	max = max - min;
+	for (i = height / 2; i < height; i++) {
+		for (j = width / 2; j < width; j++) {
+			inputImage[i][j] = (inputImage[i][j] - min) * 255 / max;
+		}
+	}
+
+
+
+	min = max = inputImage[0][0];
+	for (i = 0; i < height / 2; i++) {
+		for (j = 0; j < width / 2; j++) {
+			if (inputImage[i][j] <= min) {
+				min = inputImage[i][j];
+			}
+			if (inputImage[i][j] >= max) {
+				max = inputImage[i][j];
+			}
+		}
+	}
+
+	max = max - min;
+	for (i = 0; i < height / 2; i++) {
+		for (j = 0; j < width / 2; j++) {
+			inputImage[i][j] = (inputImage[i][j] - min) * 255 / max;
+		}
+	}
+
+	return inputImage;
 }
