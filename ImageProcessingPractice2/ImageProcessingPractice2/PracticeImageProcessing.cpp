@@ -344,7 +344,7 @@ int main() {
 }
 */
 
-/*대칭
+/*대칭*/
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -352,12 +352,14 @@ int main() {
 	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	IplImage* outputImage_1 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
 	IplImage* outputImage_2 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
+	IplImage* outputImage_3 = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
 
 	int i, j;
 
 	for (i = 0; i < inputImage->height; i++) { // 좌우반전
 		for (j = 0; j < inputImage->width; j++) {
 			cvSet2D(outputImage_1, i, inputImage->width - j - 1, cvGet2D(inputImage, i, j));
+			//cvSet2D(outputImage_1, inputImage->height - i - 1, j, cvGet2D(inputImage, i, j));
 		}
 	}
 
@@ -366,20 +368,27 @@ int main() {
 			cvSet2D(outputImage_2, inputImage->height - i - 1, j, cvGet2D(inputImage, i, j));
 		}
 	}
+	for (i = 0; i < inputImage->height; i++) { // 상하좌우반전
+		for (j = 0; j < inputImage->width; j++) {
+			cvSet2D(outputImage_3, inputImage->height - i - 1, inputImage->width - j - 1, cvGet2D(inputImage, i, j));
+		}
+	}
 
 	cvShowImage("input Image", inputImage);
 	cvShowImage("Output Image1", outputImage_1);
 	cvShowImage("Output Image2", outputImage_2);
+	cvShowImage("Output Image3", outputImage_3);
 	cvWaitKey();
 
 	cvDestroyAllWindows();
 	cvReleaseImage(&inputImage);
 	cvReleaseImage(&outputImage_1);
 	cvReleaseImage(&outputImage_2);
+	cvReleaseImage(&outputImage_3);
 
 	return 0;
 }
-*/
+
 /*회전
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -1111,6 +1120,7 @@ double *DWT_1D(double *data, int len) {
 
 
 // wavelet ��ȯ
+/*
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -1357,3 +1367,4 @@ double **OnScale(double **inputImage, int height, int width) {
 
 	return inputImage;
 }
+*/
