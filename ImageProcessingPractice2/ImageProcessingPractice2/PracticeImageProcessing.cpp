@@ -344,7 +344,7 @@ int main() {
 }
 */
 
-/*대칭*/
+/*대칭
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -388,7 +388,7 @@ int main() {
 
 	return 0;
 }
-
+*/
 /*회전
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -436,9 +436,9 @@ int main() {
 
 	return 0;
 }
-
-/*팽창, 침식
-
+*/
+/*팽창, 침식*/
+/*
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -501,7 +501,6 @@ int main() {
 
 			dilationSum = 0;
 			erosionSum = 0;
-
 		}
 	}
 
@@ -519,7 +518,7 @@ int main() {
 }
 */
 
-/*골격화
+/*골격화*/
 #include <opencv\cv.h>
 #include <opencv\highgui.h>
 
@@ -708,7 +707,7 @@ IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
 
 	return outImage;
 }
-*/
+
 
 /*FFT & 역FFT
 #include <opencv/cv.h>
