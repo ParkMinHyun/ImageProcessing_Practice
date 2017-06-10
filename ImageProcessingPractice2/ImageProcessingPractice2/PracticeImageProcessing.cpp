@@ -605,8 +605,8 @@ IplImage *Dilation(IplImage *binaryImage) {
 
 IplImage *Open(IplImage *binaryImage) {
 	IplImage *outImage = cvCreateImage(cvSize(binaryImage->width, binaryImage->height), 8, 1);
-	outImage = Dilation(binaryImage);
-	outImage = Erosion(outImage);
+	outImage = Dilation(outImage);
+	outImage = Erosion(binaryImage);
 
 	return outImage;
 }
@@ -617,6 +617,7 @@ IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
 	IplImage *outImage = cvCreateImage(cvSize(grayImage->width, grayImage->height), 8, 1);
 	CvScalar tempValue;
 	int i, j;
+
 
 	for (i = 0; i < grayImage->height; i++) {
 		for (j = 0; j < grayImage->width; j++) {
