@@ -517,6 +517,7 @@ int main() {
 	return 0;
 }
 */
+/*Open
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -605,8 +606,8 @@ IplImage *Dilation(IplImage *binaryImage) {
 
 IplImage *Open(IplImage *binaryImage) {
 	IplImage *outImage = cvCreateImage(cvSize(binaryImage->width, binaryImage->height), 8, 1);
-	outImage = Dilation(outImage);
-	outImage = Erosion(binaryImage);
+	outImage = Erosion(outImage);
+	outImage = Dilation(binaryImage);
 
 	return outImage;
 }
@@ -670,7 +671,8 @@ int main() {
 
 	return 0;
 }
-/*골격화
+*/
+/*골격화*/
 #include <opencv\cv.h>
 #include <opencv\highgui.h>
 
@@ -860,7 +862,7 @@ IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
 	return outImage;
 }
 
-*/
+
 /*FFT & 역FFT
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
