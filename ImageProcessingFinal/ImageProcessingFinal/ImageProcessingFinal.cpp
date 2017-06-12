@@ -1,6 +1,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+void SaveImage(char *saveImageName, IplImage *saveImage);
+
 int main() {
 	IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_COLOR); // 기존 이미지 로드
 	IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_COLOR); // 합성할 이미지 로드
@@ -24,6 +26,8 @@ int main() {
 		}
 	}
 
+	SaveImage("foo.jpg", mix);
+
 	cvNamedWindow("lena image", CV_WINDOW_AUTOSIZE);
 	cvNamedWindow("heart image", CV_WINDOW_AUTOSIZE);
 	cvNamedWindow("mix image", CV_WINDOW_AUTOSIZE);
@@ -43,4 +47,8 @@ int main() {
 	cvReleaseImage(&mix);
 
 	return 0;
+}
+
+void SaveImage(char *saveImageName, IplImage *saveImage) {
+	cvSaveImage(saveImageName, saveImage);
 }
