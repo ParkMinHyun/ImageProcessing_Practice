@@ -389,16 +389,34 @@ int main() {
 	return 0;
 }
 */
-/*회전
+/*회전*/
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
 #define PI 3.141592
 #define DEGREE 90 // 회전 각도
 
+IplImage *Rotation(IplImage *mainImage, IplImage *scaleDownImage);
+
 int main() {
 	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	IplImage* outputImage = cvCreateImage(cvSize(inputImage->width, inputImage->height), inputImage->depth, inputImage->nChannels);
+
+
+	outputImage = Rotation(inputImage, outputImage);
+
+	cvShowImage("input Image", inputImage);
+	cvShowImage("Output Image", outputImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&inputImage);
+	cvReleaseImage(&outputImage);
+
+	return 0;
+}
+
+IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 
 	int i, j, Center_y, Center_x, source_y, source_x;
 	double Radian, cosR, sinR;
@@ -425,18 +443,8 @@ int main() {
 			cvSet2D(outputImage, i, j, Value);
 		}
 	}
-
-	cvShowImage("input Image", inputImage);
-	cvShowImage("Output Image", outputImage);
-	cvWaitKey();
-
-	cvDestroyAllWindows();
-	cvReleaseImage(&inputImage);
-	cvReleaseImage(&outputImage);
-
-	return 0;
+	return outputImage;
 }
-*/
 /*팽창, 침식*/
 /*
 #include <opencv/cv.h>
@@ -673,6 +681,7 @@ int main() {
 }
 */
 /*골격화*/
+/*
 #include <opencv\cv.h>
 #include <opencv\highgui.h>
 
@@ -861,7 +870,7 @@ IplImage *gray2binaryImage(IplImage *grayImage, const int Threshold) {
 
 	return outImage;
 }
-
+*/
 
 /*FFT & 역FFT
 #include <opencv/cv.h>
