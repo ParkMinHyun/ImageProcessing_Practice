@@ -3,18 +3,19 @@
 
 void SaveImage(char *saveImageName, IplImage *saveImage);
 IplImage *scaleDown(IplImage *sclaeDownImage, IplImage *tempImage);
-IplImage *mix(IplImage *lenaImage, IplImage *scaleDownImage);
+IplImage *mix(IplImage *mainImage, IplImage *scaleDownImage);
 
 int main() {
 	IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_COLOR); // 기존 이미지 로드
 	IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_COLOR); // 합성할 이미지 로드
+	IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_COLOR); // 합성할 이미지 로드
 	IplImage* scaleDownImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels); // 합성된 이미지 생성
 	IplImage* mixImage = cvCreateImage(cvGetSize(lena), lena->depth, lena->nChannels); // 합성된 이미지 생성
-	
+
 	int i, j;
 	CvScalar temp;
-	
-	scaleDownImage = scaleDown(heart, scaleDownImage);
+
+	scaleDownImage = scaleDown(Rock, scaleDownImage);
 	mixImage = mix(lena, scaleDownImage);
 	//SaveImage("mix.jpg", mix);
 
@@ -43,7 +44,7 @@ void SaveImage(char *saveImageName, IplImage *saveImage) {
 	cvSaveImage(saveImageName, saveImage);
 }
 
-IplImage *scaleDown(IplImage *sclaeDownImage, IplImage *tempImage){
+IplImage *scaleDown(IplImage *sclaeDownImage, IplImage *tempImage) {
 	int i, j;
 	CvScalar pixelValue;
 
@@ -59,24 +60,47 @@ IplImage *scaleDown(IplImage *sclaeDownImage, IplImage *tempImage){
 	}
 	return tempImage;
 }
+//
+//IplImage *mix(IplImage *lenaImage, IplImage *scaleDownImage) {
+//	int i, j; 
+//	IplImage* mixImage = cvCreateImage(cvGetSize(lenaImage), lenaImage->depth, lenaImage->nChannels); // 합성된 이미지 생성
+//	CvScalar pixelValue,temp;
+//	
+//	for (i = 0; i < scaleDownImage->height; i++) {
+//		for (j = 0; j < scaleDownImage->width; j++) {
+//
+//			pixelValue = cvGet2D(scaleDownImage, i, j); // 합성할 이미지의 색 얻기
+//			if (pixelValue.val[0] < 240) {
+//				temp = cvGet2D(scaleDownImage, i, j); // 합성할 이미지 보다 어두우면 그 색을 설정
+//				cvSet2D(mixImage, i, j, temp);
+//			}
+//			else {
+//				temp = cvGet2D(lenaImage, i, j); // 그외는 원본 값
+//				cvSet2D(mixImage, i, j, temp);
+//			}
+//		}
+//	}
+//	return mixImage;
+//}
 
-IplImage *mix(IplImage *lenaImage, IplImage *scaleDownImage) {
-	int i, j; 
-	IplImage* mixImage = cvCreateImage(cvGetSize(lenaImage), lenaImage->depth, lenaImage->nChannels); // 합성된 이미지 생성
-	CvScalar pixelValue,temp;
-	
+IplImage *mix(IplImage *mainImage, IplImage *scaleDownImage) {
+	int i, j;
+	IplImage* mixImage = cvCreateImage(cvGetSize(mainImage), mainImage->depth, mainImage->nChannels); // 합성된 이미지 생성
+	CvScalar pixelValue, temp;
+
 	for (i = 0; i < scaleDownImage->height; i++) {
 		for (j = 0; j < scaleDownImage->width; j++) {
 
 			pixelValue = cvGet2D(scaleDownImage, i, j); // 합성할 이미지의 색 얻기
-			if (pixelValue.val[0] < 240) {
-				temp = cvGet2D(scaleDownImage, i, j); // 합성할 이미지 보다 어두우면 그 색을 설정
+			if (pixelValue.val[0] == 255) {
+				temp = cvGet2D(mainImage, i, j); // 그외는 원본 값
 				cvSet2D(mixImage, i, j, temp);
 			}
 			else {
-				temp = cvGet2D(lenaImage, i, j); // 그외는 원본 값
+				temp = cvGet2D(scaleDownImage, i, j); // 합성할 이미지 보다 어두우면 그 색을 설정
 				cvSet2D(mixImage, i, j, temp);
 			}
+
 		}
 	}
 	return mixImage;
