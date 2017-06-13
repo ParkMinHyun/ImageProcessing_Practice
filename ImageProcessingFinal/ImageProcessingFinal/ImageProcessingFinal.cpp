@@ -330,7 +330,7 @@ void RFFT1d(Complex *X, int N, int Log2N)
 
 #define PI 3.141592
 #define SUB_SAMPLING_RATE 2 // ��� ����
-#define DEGREE 90 // ȸ�� ����
+#define DEGREE 45 // ȸ�� ����
 
 void SaveImage(char *saveImageName, IplImage *saveImage);
 void Swap(double *a, double *b); // ������ ��ȯ
@@ -342,22 +342,23 @@ IplImage *Mix(IplImage *mainImage, IplImage *scaleDownImage);
 IplImage *Rotation(IplImage *mainImage, IplImage *scaleDownImage);
 
 int main() {
-	IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE); // ���� �̹��� �ε�
-	IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_GRAYSCALE); // �ռ��� �̹��� �ε�
-	IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_GRAYSCALE); // �ռ��� �̹��� �ε�
-	//IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_COLOR); // ���� �̹��� �ε�
-	//IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_COLOR); // �ռ��� �̹��� �ε�
-	//IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_COLOR); // �ռ��� �̹��� �ε�
-	IplImage* scaleDownImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels); // Scale down �̹��� ����
-	IplImage* rotationImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels);  // ȸ�� �̹��� ����
-	IplImage* mixImage = cvCreateImage(cvGetSize(lena), lena->depth, lena->nChannels); // �ռ��� �̹��� ����
+	//IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	//IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_GRAYSCALE); 
+	//IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_COLOR);
+	IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_COLOR);
+	IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_COLOR);
+	IplImage* human = cvLoadImage("human2.png", CV_LOAD_IMAGE_COLOR);
+	IplImage* scaleDownImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels);
+	IplImage* rotationImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels); 
+	IplImage* mixImage = cvCreateImage(cvGetSize(lena), lena->depth, lena->nChannels); 
 
 	int i, j;
 	CvScalar temp;
 
 	//scaleDownImage = ScaleDown_Median(Rock); // 미디언 축소
-	scaleDownImage = ScaleDown_Average(Rock);  // 평균 축소 
-	//scaleDownImage = ScaleDown_RGB(Rock, scaleDownImage); // 단순 축소(RGB 가능)
+	//scaleDownImage = ScaleDown_Average(Rock);  // 평균 축소 
+	scaleDownImage = ScaleDown_RGB(human, scaleDownImage); // 단순 축소(RGB 가능)
 	rotationImage = Rotation(scaleDownImage, rotationImage);
 	mixImage = Mix(lena, rotationImage);
 
@@ -414,6 +415,8 @@ void BubbleSort(double *A, int MAX) {
 
 IplImage *ScaleDown_RGB(IplImage *scaleDownImage, IplImage *tempImage) {
 	int i, j;
+
+	cvSetZero(tempImage);
 	CvScalar pixelValue;
 
 	for (i = 0; i < scaleDownImage->height; i++) {
@@ -516,28 +519,6 @@ IplImage *ScaleDown_Median(IplImage *sclaeDownImage) {
 	return outputImage;
 }
 
-IplImage *Mix(IplImage *mainImage, IplImage *scaleDownImage) {
-	int i, j;
-	IplImage* mixImage = cvCreateImage(cvGetSize(mainImage), mainImage->depth, mainImage->nChannels);
-	CvScalar pixelValue, temp;
-
-	for (i = 0; i < scaleDownImage->height; i++) {
-		for (j = 0; j < scaleDownImage->width; j++) {
-
-			pixelValue = cvGet2D(scaleDownImage, i, j); 
-			if (pixelValue.val[0] != 255) {
-				temp = cvGet2D(scaleDownImage, i, j);
-				cvSet2D(mixImage, i, j, temp);
-			}
-			else {
-				temp = cvGet2D(mainImage, i, j);
-				cvSet2D(mixImage, i, j, temp);
-			}
-		}
-	}
-	return mixImage;
-}
-
 IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 
 	int i, j, Center_y, Center_x, source_y, source_x;
@@ -566,6 +547,28 @@ IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 		}
 	}
 	return outputImage;
+}
+
+IplImage *Mix(IplImage *mainImage, IplImage *scaleDownImage) {
+	int i, j;
+	IplImage* mixImage = cvCreateImage(cvGetSize(mainImage), mainImage->depth, mainImage->nChannels);
+	CvScalar pixelValue, temp;
+
+	for (i = 0; i < scaleDownImage->height; i++) {
+		for (j = 0; j < scaleDownImage->width; j++) {
+
+			pixelValue = cvGet2D(scaleDownImage, i, j);
+			if (pixelValue.val[0] != 0) {
+				temp = cvGet2D(scaleDownImage, i, j);
+				cvSet2D(mixImage, i, j, temp);
+			}
+			else {
+				temp = cvGet2D(mainImage, i, j);
+				cvSet2D(mixImage, i, j, temp);
+			}
+		}
+	}
+	return mixImage;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
