@@ -1,9 +1,9 @@
 ﻿/*1번-FFT&RFFT*/
-/*
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+#include <stdlib.h>
 
-struct Complex {
+typedef struct Complex {
 	double Re; //Variables for real numbers 실수부
 	double Im; //Variables for imaginary numbers 허수부
 };
@@ -16,20 +16,24 @@ void Scrambling(Complex *X, int N, int Log2N);
 void Butterfly(Complex *X, int N, int Log2N, int mode);
 void SaveImage(char *saveImageName, IplImage *saveImage);
 int ReverseBitOrder(int index, int Log2N);
-
+double ReceiveSNRvalue(IplImage* originalImage, IplImage *outputImage);
 IplImage* RFFT2d(IplImage* FFTSpectrum);
 void RFFT1d(Complex *X, int N, int Log2N);
+double* ConvertToOneDimensionalArray(IplImage* Image);
 
 int main()
 {
 	IplImage* inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	IplImage* FFTSpectrum;
 	IplImage* RFFTImage;
+	double SNRValue;
 
 	FFTSpectrum = FFT2d(inputImage); //Fast Fourier Transform
-	SaveImage("FFTSPECTRUM.jpg", FFTSpectrum);
+	//SaveImage("FFTSPECTRUM.jpg", FFTSpectrum);
 	RFFTImage = RFFT2d(FFTSpectrum); // Reverse 역방향 FFT
-	SaveImage("RFFTImage.jpg", RFFTImage);
+	//SaveImage("RFFTImage.jpg", RFFTImage);
+	SNRValue = ReceiveSNRvalue(inputImage, RFFTImage);
+	printf("SNRValue : %f\n", SNRValue);
 
 	cvShowImage("Input Image", inputImage);
 	cvShowImage("FFT Spectrum", FFTSpectrum);
@@ -42,7 +46,56 @@ int main()
 
 	return 0;
 }
+double ReceiveSNRvalue(IplImage* originalImage, IplImage *outputImage)
+{
+	double SNRValue;
+	double *m_InputImage;
+	double *m_SkeletonImage;
+	double OrgSum, ErrSum, MeanErr, MeanOrg;
+	int i, j;
 
+	OrgSum = 0.0;
+	ErrSum = 0.0;
+	
+	CvScalar originalImagePixel, outputImagePixel;
+	int m_Size = originalImage->width * originalImage->height;
+
+	for (int i = 0; i < originalImage->height; i++) {
+		for (int j = 0; j < originalImage->width; j++) {
+			originalImagePixel = cvGet2D(originalImage, i, j);
+			outputImagePixel = cvGet2D(outputImage, i, j);
+			ErrSum += ((double)originalImagePixel.val[0] - outputImagePixel.val[0]) *
+				((double)originalImagePixel.val[0] - outputImagePixel.val[0]);
+		}
+	}
+	MeanErr = ErrSum / m_Size;
+	
+	for (int i = 0; i < originalImage->height; i++) {
+		for (int j = 0; j < originalImage->width; j++) {
+			originalImagePixel = cvGet2D(originalImage, i, j);
+			OrgSum += ((double)originalImagePixel.val[0]) * ((double)originalImagePixel.val[0]);
+		}
+	}
+	MeanOrg = OrgSum / m_Size;
+
+	SNRValue = (10 * (double)log10(MeanOrg / MeanErr));
+	return SNRValue;
+}
+
+double* ConvertToOneDimensionalArray(IplImage* Image) {
+	double convertImage[262144];
+
+	CvScalar pixel;
+	int cnt = 0;
+	for (int i = 0; i < Image->height; i++) {
+		for (int j = 0; j < Image->width; j++) {
+			pixel = cvGet2D(Image, i, j);
+			convertImage[cnt] = pixel.val[0];
+			cnt += 1;
+		}
+	}
+	return convertImage;
+}
 IplImage* FFT2d(IplImage* inputImage)
 {
 	int i, j, row, col, Log2N, Num;
@@ -73,13 +126,13 @@ IplImage* FFT2d(IplImage* inputImage)
 	//주파수 영역 변환 영상을 저장하기 위한 배열
 	temp = new unsigned char *[inputImage->height];
 
-	for (i = 0; i<inputImage->height; i++) {
+	for (i = 0; i < inputImage->height; i++) {
 		FFT[i] = new Complex[inputImage->width];
 		temp[i] = new unsigned char[inputImage->width];
 	}
 
-	for (i = 0; i<inputImage->height; i++) {
-		for (j = 0; j<inputImage->width; j++)
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++)
 		{
 			Data[j].Re = (double)inputImage->imageData[i*inputImage->widthStep + j];
 			// copy one row of input, the real component value is the value of the image
@@ -88,7 +141,7 @@ IplImage* FFT2d(IplImage* inputImage)
 		}
 		FFT1d(Data, inputImage->width, Log2N); //1D FFT 1차원 FFT
 
-		for (j = 0; j<inputImage->width; j++) { //Save Results
+		for (j = 0; j < inputImage->width; j++) { //Save Results
 			FFT[i][j].Re = Data[j].Re;
 			FFT[i][j].Im = Data[j].Im;
 		}
@@ -105,22 +158,22 @@ IplImage* FFT2d(IplImage* inputImage)
 
 	Data = new Complex[inputImage->height];
 
-	for (i = 0; i<inputImage->width; i++) {
-		for (j = 0; j<inputImage->height; j++) {
+	for (i = 0; i < inputImage->width; i++) {
+		for (j = 0; j < inputImage->height; j++) {
 			Data[j].Re = FFT[j][i].Re; //Copy a row of images 영상의 한 열을 복사
 			Data[j].Im = FFT[j][i].Im;
 		}
 
 		FFT1d(Data, inputImage->height, Log2N); //1D FFT 1차원 FFT
 
-		for (j = 0; j<inputImage->height; j++) { //Save Results
+		for (j = 0; j < inputImage->height; j++) { //Save Results
 			FFT[j][i].Re = Data[j].Re;
 			FFT[j][i].Im = Data[j].Im;
 		}
 	}
 
-	for (i = 0; i<inputImage->height; i++) {
-		for (j = 0; j<inputImage->width; j++) {
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) {
 			Value = sqrt((FFT[i][j].Re * FFT[i][j].Re) + (FFT[i][j].Im * FFT[i][j].Im));
 			Absol = 20 * log(Value);
 
@@ -133,10 +186,10 @@ IplImage* FFT2d(IplImage* inputImage)
 		}
 	}
 	//shuffling process 셔플링 과정
-	for (i = 0; i<inputImage->height; i += inputImage->height / 2) {
-		for (j = 0; j<inputImage->width; j += inputImage->width / 2) {
-			for (row = 0; row<inputImage->height / 2; row++) {
-				for (col = 0; col<inputImage->width / 2; col++) {
+	for (i = 0; i < inputImage->height; i += inputImage->height / 2) {
+		for (j = 0; j < inputImage->width; j += inputImage->width / 2) {
+			for (row = 0; row < inputImage->height / 2; row++) {
+				for (col = 0; col < inputImage->width / 2; col++) {
 					tempScalar = cvGet2D(tempImage, i + row, j + col);
 					temp[(inputImage->height / 2 - 1) - row + i][(inputImage->width / 2 - 1) - col + j] = (unsigned char)tempScalar.val[0];
 				}
@@ -144,8 +197,8 @@ IplImage* FFT2d(IplImage* inputImage)
 		}
 	}
 
-	for (i = 0; i<inputImage->height; i++) {
-		for (j = 0; j<inputImage->width; j++) {
+	for (i = 0; i < inputImage->height; i++) {
+		for (j = 0; j < inputImage->width; j++) {
 			cvSet2D(FFTSpectrum, i, j, cvScalar(temp[i][j]));
 		}
 	}
@@ -169,12 +222,12 @@ void Scrambling(Complex *X, int N, int Log2N)
 
 	temp = new Complex[N];
 
-	for (i = 0; i<N; i++) {
+	for (i = 0; i < N; i++) {
 		temp[i].Re = X[ReverseBitOrder(i, Log2N)].Re;
 		temp[i].Im = X[ReverseBitOrder(i, Log2N)].Im;
 	}
 
-	for (i = 0; i<N; i++) {
+	for (i = 0; i < N; i++) {
 		X[i].Re = temp[i].Re;
 		X[i].Im = temp[i].Im;
 	}
@@ -193,17 +246,17 @@ void Butterfly(Complex *X, int N, int Log2N, int mode)
 
 	Y = new Complex[N / 2];
 
-	for (i = 0; i<Log2N; i++) {
+	for (i = 0; i < Log2N; i++) {
 		Value = pow(2., i + 1);
 
 		if (mode == 1) {
-			for (j = 0; j<(int)(Value / 2); j++) {
+			for (j = 0; j < (int)(Value / 2); j++) {
 				Y[j].Re = cos(j * 2.0 * PI / Value);
 				Y[j].Im = -sin(j * 2.0 * PI / Value);
 			}
 		}
 		if (mode == 2) {
-			for (j = 0; j<(int)(Value / 2); j++) {
+			for (j = 0; j < (int)(Value / 2); j++) {
 				Y[j].Re = cos(j*2.0*PI / Value);
 				Y[j].Im = sin(j*2.0*PI / Value);
 			}
@@ -211,8 +264,8 @@ void Butterfly(Complex *X, int N, int Log2N, int mode)
 
 		start = 0;
 
-		for (k = 0; k<N / (int)Value; k++) {
-			for (j = start; j<start + (int)(Value / 2); j++) {
+		for (k = 0; k < N / (int)Value; k++) {
+			for (j = start; j < start + (int)(Value / 2); j++) {
 				m = j + (int)(Value / 2);
 				temp.Re = Y[j - start].Re * X[m].Re - Y[j - start].Im * X[m].Im;
 				temp.Im = Y[j - start].Im * X[m].Re + Y[j - start].Re * X[m].Im;
@@ -227,7 +280,7 @@ void Butterfly(Complex *X, int N, int Log2N, int mode)
 		}
 	}
 	if (mode == 2) {
-		for (i = 0; i<N; i++) {
+		for (i = 0; i < N; i++) {
 			X[i].Re = X[i].Re / N;
 			X[i].Im = X[i].Im / N;
 		}
@@ -242,7 +295,7 @@ int ReverseBitOrder(int index, int Log2N)
 
 	Y = 0;
 
-	for (i = 0; i< Log2N; i++) {
+	for (i = 0; i < Log2N; i++) {
 		X = (index & (1 << i)) >> i;
 		Y = (Y << 1) | X;
 	}
@@ -270,18 +323,18 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 	Data = new Complex[FFTSpectrum->height];
 	RFFT = new Complex *[FFTSpectrum->height]; //Arrangement for an inversely transformed image
 											   //역변환된 영상을 위한 배열
-	for (i = 0; i<FFTSpectrum->height; i++) {
+	for (i = 0; i < FFTSpectrum->height; i++) {
 		RFFT[i] = new Complex[FFTSpectrum->width];
 	}
 
-	for (i = 0; i<FFTSpectrum->height; i++) {
-		for (j = 0; j<FFTSpectrum->width; j++) { //Copy one row 한 행을 복사
+	for (i = 0; i < FFTSpectrum->height; i++) {
+		for (j = 0; j < FFTSpectrum->width; j++) { //Copy one row 한 행을 복사
 			Data[j].Re = FFT[i][j].Re;
 			Data[j].Im = FFT[i][j].Im;
 		}
 		RFFT1d(Data, FFTSpectrum->width, Log2N); //1D RFFT
 
-		for (j = 0; j<FFTSpectrum->width; j++) {
+		for (j = 0; j < FFTSpectrum->width; j++) {
 			RFFT[i][j].Re = Data[j].Re; //Save Results 결과 저장
 			RFFT[i][j].Im = Data[j].Im;
 		}
@@ -297,22 +350,22 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 
 	Data = new Complex[FFTSpectrum->height];
 
-	for (i = 0; i< FFTSpectrum->width; i++) {
-		for (j = 0; j<FFTSpectrum->height; j++) {
+	for (i = 0; i < FFTSpectrum->width; i++) {
+		for (j = 0; j < FFTSpectrum->height; j++) {
 			Data[j].Re = RFFT[j][i].Re; //Copy one column 한 열을 복사
 			Data[j].Im = RFFT[j][i].Im;
 		}
 
 		RFFT1d(Data, FFTSpectrum->width, Log2N); //1D RFFT
 
-		for (j = 0; j< FFTSpectrum->width; j++) {//Save Results 결과 저장
+		for (j = 0; j < FFTSpectrum->width; j++) {//Save Results 결과 저장
 			RFFT[j][i].Re = Data[j].Re;
 			RFFT[j][i].Im = Data[j].Im;
 		}
 	}
 
-	for (i = 0; i<FFTSpectrum->width; i++) {
-		for (j = 0; j<FFTSpectrum->height; j++) {
+	for (i = 0; i < FFTSpectrum->width; i++) {
+		for (j = 0; j < FFTSpectrum->height; j++) {
 			cvSet2D(outputImage, i, j, cvScalar((unsigned char)RFFT[i][j].Re));
 		}
 	}
@@ -329,6 +382,10 @@ void RFFT1d(Complex *X, int N, int Log2N)
 void SaveImage(char *saveImageName, IplImage *saveImage) {
 	cvSaveImage(saveImageName, saveImage);
 }
+
+//-------------------------------------------------------------------------------------------------
+// 2번 - 회전, 축소, 합성
+//-------------------------------------------------------------------------------------------------
 /*
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -348,21 +405,21 @@ IplImage *Rotation(IplImage *mainImage, IplImage *scaleDownImage);
 
 int main() {
 	//IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-	//IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_GRAYSCALE); 
+	//IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	//IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_COLOR);
 	IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_COLOR);
 	IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_COLOR);
 	IplImage* human = cvLoadImage("human2.png", CV_LOAD_IMAGE_COLOR);
 	IplImage* scaleDownImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels);
-	IplImage* rotationImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels); 
-	IplImage* mixImage = cvCreateImage(cvGetSize(lena), lena->depth, lena->nChannels); 
+	IplImage* rotationImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels);
+	IplImage* mixImage = cvCreateImage(cvGetSize(lena), lena->depth, lena->nChannels);
 
 	int i, j;
 	CvScalar temp;
 
 	//scaleDownImage = ScaleDown_Median(Rock); // 미디언 축소
-	//scaleDownImage = ScaleDown_Average(Rock);  // 평균 축소 
+	//scaleDownImage = ScaleDown_Average(Rock);  // 평균 축소
 	scaleDownImage = ScaleDown_RGB(human, scaleDownImage); // 단순 축소(RGB 가능)
 	rotationImage = Rotation(scaleDownImage, rotationImage);
 	mixImage = Mix(lena, rotationImage);
@@ -508,15 +565,15 @@ IplImage *ScaleDown_Median(IplImage *sclaeDownImage) {
 			for (n = 0; n < SUB_SAMPLING_RATE; n++) {
 				for (m = 0; m < SUB_SAMPLING_RATE; m++) {
 					tempScalar = cvGet2D(tempImage, i + n, j + m);
-					Mask[n*SUB_SAMPLING_RATE + m] = tempScalar.val[0]; 
+					Mask[n*SUB_SAMPLING_RATE + m] = tempScalar.val[0];
 				}
 			}
-			BubbleSort(Mask, SUB_SAMPLING_RATE * SUB_SAMPLING_RATE); 
+			BubbleSort(Mask, SUB_SAMPLING_RATE * SUB_SAMPLING_RATE);
 			OutputValue[index++] = Mask[(int)(SUB_SAMPLING_RATE * SUB_SAMPLING_RATE / 2)];
 		}
 	}
 
-	for (i = 0; i < outputImage->height; i++) { 
+	for (i = 0; i < outputImage->height; i++) {
 		for (j = 0; j < outputImage->width; j++) {
 			cvSet2D(outputImage, i, j, cvScalar(OutputValue[i*outputImage->width + j]));
 		}
@@ -530,7 +587,7 @@ IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 	double Radian, cosR, sinR;
 	CvScalar Value;
 
-	Radian = (double)DEGREE * PI / 180.0; 
+	Radian = (double)DEGREE * PI / 180.0;
 
 	cosR = cos(Radian);
 	sinR = sin(Radian);
@@ -538,7 +595,7 @@ IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 	Center_y = inputImage->height / 2;
 	Center_x = inputImage->width / 2;
 
-	for (i = 0; i < inputImage->height; i++) { 
+	for (i = 0; i < inputImage->height; i++) {
 		for (j = 0; j < inputImage->width; j++) {
 			source_x = (int)((j - Center_x)*cosR + (i - Center_y)*sinR + Center_x);
 			source_y = (int)(-(j - Center_x)*sinR + (i - Center_y)*cosR + Center_y);
@@ -595,7 +652,7 @@ IplImage *Mix(IplImage *mainImage, IplImage *scaleDownImage) {
 //	IplImage *inputImage = cvLoadImage("rect2.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 //	IplImage *SkeletonImage = cvCreateImage(cvGetSize(inputImage), 8, 1);
 //	IplImage *binaryImage;
-//
+//f
 //	cvSetZero(SkeletonImage);
 //	binaryImage = gray2binaryImage(inputImage, THRESHOLD);
 //	SkeletonImage = Skeletonization(binaryImage, SkeletonImage);
@@ -648,6 +705,7 @@ IplImage *Mix(IplImage *mainImage, IplImage *scaleDownImage) {
 //				}
 //			}
 //		}
+//
 //		sum = 0;
 //		for (i = 0; i < binaryImage->height; i++) {
 //			for (j = 0; j < binaryImage->width; j++) {

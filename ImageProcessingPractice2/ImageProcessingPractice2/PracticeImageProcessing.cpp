@@ -389,7 +389,7 @@ int main() {
 	return 0;
 }
 */
-/*회전*/
+/*회전
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -445,6 +445,7 @@ IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 	}
 	return outputImage;
 }
+*/
 /*팽창, 침식*/
 /*
 #include <opencv/cv.h>
@@ -1530,3 +1531,572 @@ double **OnScale(double **inputImage, int height, int width) {
 	return inputImage;
 }
 */
+
+
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+
+//상수 정의
+#define FilterTap	2
+//분해 레벨 고정
+#define Level		1
+
+//영상의 세로, 가로, 전체 크기
+#define m_Height 512
+#define m_Width  512
+#define m_Size   m_Height*m_Width
+
+//임시 입출력 변수
+double **m_tempInput;
+double **m_tempOutput;
+
+//필터 변수
+double *m_FilterH0;
+double *m_FilterH1;
+double *m_FilterG0;
+double *m_FilterG1;
+
+double *m_Recon;
+
+//입력, 출력, 변환 영상 버퍼
+unsigned char *m_InputImage;
+unsigned char *m_OutputImage;
+unsigned char **m_ArrangeImage;
+
+//함수 선언
+double* OnDownSampling(double *m_Target, int size);
+double* OnUpSampling(double *m_Target, int size);
+double* OnConvolution(double *m_Target, double *m_Filter, int size, int mode);
+
+void	OnFilterGen(double *m_H0, double *m_H1, double *m_G0, double *m_G1);
+void	OnWaveletEncode();
+void	OnWaveletDecode();
+
+double** OnScale(double **m_Target, int height, int width);
+double** OnMem2DAllocDouble(int height, int width);
+
+unsigned char** OnMem2DAllocUnsigned(int height, int width);
+
+int main()
+{
+	/* 변수 선언 */
+	int i, j, k = 0;
+	IplImage *inputImage = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
+	IplImage *waveletImage = cvCreateImage(cvSize((inputImage->height), (inputImage->width)), 8, 1);
+	IplImage *outputImage = cvCreateImage(cvSize((inputImage->height), (inputImage->width)), 8, 1);
+
+	m_InputImage = new unsigned char[m_Size];
+	m_OutputImage = new unsigned char[m_Size];
+
+	for (i = 0; i<m_Size; i++)
+	{
+		m_InputImage[i] = (unsigned char)inputImage->imageData[i];
+	}
+
+	OnWaveletEncode();
+	OnWaveletDecode();
+
+	for (i = 0; i<m_Height; i++) {
+		for (j = 0; j<m_Width; j++) {
+			waveletImage->imageData[k++] = (char)m_ArrangeImage[i][j];
+		}
+	}
+	for (i = 0; i<m_Size; i++) {
+		outputImage->imageData[i] = (char)m_OutputImage[i];
+	}
+
+	cvShowImage("Input Image", inputImage);
+	cvShowImage("Wavelet Image", waveletImage);
+	cvShowImage("OutPutImage", outputImage);
+
+	cvSaveImage("Input Image.jpg", inputImage);
+	cvSaveImage("Wavelet Image.jpg", waveletImage);
+	cvSaveImage("OutPutImage.jpg", outputImage);
+	cvWaitKey();
+
+	cvDestroyAllWindows();
+	cvReleaseImage(&waveletImage);
+	cvReleaseImage(&outputImage);
+	cvReleaseImage(&inputImage);
+
+	return 0;
+}
+//다운 샘플링 함수
+double* OnDownSampling(double *m_Target, int size)
+{
+	/* 변수 선언 */
+	int i;
+	double *m_temp;
+
+	m_temp = new double[size / 2];
+
+	/* 다운 샘플링 처리 */
+	for (i = 0; i < size / 2; i++)
+	{
+		m_temp[i] = m_Target[2 * i];
+	}
+
+	return m_temp;
+}
+//업 샘플링 함수
+double* OnUpSampling(double *m_Target, int size)
+{
+	/* 변수 선언 */
+	int i;
+	double *m_temp;
+
+	m_temp = new double[size * 2];
+
+	/* 업 샘플링 처리 */
+	for (i = 0; i < size * 2; i++)
+		m_temp[i] = 0.0;
+
+	for (i = 0; i < size; i++)
+		m_temp[2 * i] = m_Target[i];
+
+	return m_temp;
+}
+//1차원 컨벌루션 함수
+double* OnConvolution(double *m_Target, double *m_Filter, int size, int mode)
+{
+	/* 변수 선언 */
+	int i, j;
+	double *m_temp, *m_tempConv;
+	double m_sum = 0.0;
+
+	/* 컨벌루션 결과 출력 배열 */
+	m_temp = new double[size + FilterTap - 1];
+	m_tempConv = new double[size];
+
+	/* 컨벌루션을 위한 초기화 과정 */
+	switch (mode)
+	{
+	case 1:	// mode가 1일때
+		for (i = 0; i < size; i++)
+			m_temp[i] = m_Target[i];
+
+		for (i = 0; i < FilterTap - 1; i++)
+			m_temp[size + 1] = m_Target[i];
+
+		break;
+
+	case 2:	// mode가 2일때
+		for (i = 0; i < FilterTap - 1; i++)
+			m_temp[i] = m_Target[size - FilterTap + i + 1];
+
+		for (i = FilterTap - 1; i < size + FilterTap - 1; i++)
+			m_temp[i] = m_Target[i - FilterTap + 1];
+
+		break;
+	}
+
+	/* 컨벌루션 연산 */
+	for (i = 0; i < size; i++)
+	{
+		for (j = 0; j < FilterTap; j++)
+		{
+			m_sum += (m_temp[j + i] * m_Filter[FilterTap - j - 1]);
+		}
+		m_tempConv[i] = m_sum;
+		m_sum = 0.0;
+	}
+
+	return m_tempConv;	//연산 결과 return
+}
+//필터 생성 함수
+void OnFilterGen(double *m_H0, double *m_H1, double *m_G0, double *m_G1)
+{
+	int i;
+	/* 각각의 필터계수값을 초기화 */
+	switch (FilterTap)
+	{
+	case 2:
+		m_H0[0] = 0.70710678118655;
+		m_H0[1] = 0.70710678118655;
+		break;
+	case 4:
+		m_H0[0] = -0.12940952255092;
+		m_H0[1] = 0.22414386804186;
+		m_H0[2] = 0.83651630373747;
+		m_H0[3] = 0.48296291314469;
+		break;
+	case 6:
+		m_H0[0] = 0.03522629188210;
+		m_H0[1] = -0.08544127388224;
+		m_H0[2] = -0.13501102001039;
+		m_H0[3] = 0.45987750211933;
+		m_H0[4] = 0.80689150931334;
+		m_H0[5] = 0.33267055295096;
+		break;
+	case 8:
+		m_H0[0] = -0.01059740178500;
+		m_H0[1] = 0.03288301166698;
+		m_H0[2] = 0.03084138183599;
+		m_H0[3] = -0.18703481171888;
+		m_H0[4] = -0.02798376941698;
+		m_H0[5] = 0.63088076792959;
+		m_H0[6] = 0.71484657055254;
+		m_H0[7] = 0.23037781330886;
+		break;
+	default:
+		printf("Wrong Filter");
+		return;
+	}
+
+	/* H0 필터계수를 이용해, H1, G0, G1 필터 계수 생성*/
+	for (i = 0; i < FilterTap; i++)
+		m_H1[i] = pow((double)-1, i + 1) * m_H0[FilterTap - i - 1];
+
+	for (i = 0; i < FilterTap; i++)
+		m_G0[i] = m_H0[FilterTap - i - 1];
+
+	for (i = 0; i < FilterTap; i++)
+		m_G1[i] = pow((double)-1, i) * m_H0[i];
+}
+
+//2차원 메모리 할당 함수
+unsigned char** OnMem2DAllocUnsigned(int height, int width)
+{
+	// unsigned char 형태의 2차원 배열 할당
+	int i, j;
+	unsigned char **temp;
+
+	temp = new unsigned char *[height];
+	/* unsigned char 형태의 2차원 배열 할당 */
+	for (i = 0; i < height; i++)
+		temp[i] = new unsigned char[width];
+	/* unsigned char 형태의 2차원 배열 초기화 */
+	for (i = 0; i < height; i++)
+		for (j = 0; j < width; j++)
+			temp[i][j] = 0;
+
+	return temp;	//초기화된 2차원 배열 return
+}
+//2차원 메모리 할당 함수
+double** OnMem2DAllocDouble(int height, int width)
+{
+	// double 형태의 2차원 배열 할당
+	int i, j;
+	double **temp;
+
+	temp = new double *[height];
+	/* double 형태의 2차원 배열 할당 */
+	for (i = 0; i < height; i++)
+		temp[i] = new double[width];
+	/* double 형태의 2차원 배열 초기화 */
+	for (i = 0; i < height; i++)
+		for (j = 0; j < width; j++)
+			temp[i][j] = 0;
+
+	return temp;	//초기화된 2차원 배열 return
+}
+//정규화 함수
+double** OnScale(double **m_Target, int height, int width)
+{
+	// 필터링 된 값을 0~ 255 사이의 값으로 정규화
+	int i, j;
+	double min, max;
+	double **temp;
+
+	temp = OnMem2DAllocDouble(height, width);
+
+	min = max = m_Target[0][0];
+
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			/* 최소값일 경우 */
+			if (m_Target[i][j] <= min)
+			{
+				min = m_Target[i][j];
+			}
+			/* 최대값일 경우 */
+			if (m_Target[i][j] >= max)
+			{
+				max = m_Target[i][j];
+			}
+		}
+	}
+
+	max = max - min;
+	/* 정규화 처리 */
+	for (i = 0; i < height; i++)
+	{
+		for (j = 0; j < width; j++)
+		{
+			temp[i][j] = (m_Target[i][j] - min) * (255. / max);
+		}
+	}
+
+	return temp;	//정교화된 값을 return
+}
+
+//역방향 웨이블렛 변환 함수 (코드작성)
+void OnWaveletDecode()
+{
+	int i, j, k;
+	int width, height;
+	double *tempLL, *tempLH, *tempHL, *tempHH, *tempL, *tempH;
+	double **L, **H;
+	double *Up1, *Up2, *Up3, *Up4;
+	double *Conv1, *Conv2, *Conv3, *Conv4;
+	double **R;
+
+	width = m_Width / (int)(pow((double)2, Level));
+	height = m_Height / (int)(pow((double)2, Level));
+
+	m_Recon = new double[m_Width * m_Height];
+
+	//분해 레벨이 상수이므로 k 초기값 고정
+	for (k = Level; k>0; k--) {
+		if (width >    m_Width || height >m_Height) { // 분해 종료
+			return;
+		}
+
+		tempLL = new double[height];
+		tempLH = new double[height];
+		tempHL = new double[height];
+		tempHH = new double[height];
+		L = OnMem2DAllocDouble(height * 2, width);
+		H = OnMem2DAllocDouble(height * 2, width);
+
+		tempL = new double[width];
+		tempH = new double[width];
+
+		R = OnMem2DAllocDouble(height * 2, width * 2);
+
+		for (i = 0; i<width; i++) {
+			for (j = 0; j<height; j++) {
+				// 정렬 영상에서 처리하려는 열을 분리
+				tempLL[j] = m_tempOutput[j][i];
+				tempLH[j] = m_tempOutput[j + height][i];
+				tempHL[j] = m_tempOutput[j][i + width];
+				tempHH[j] = m_tempOutput[j + height][i + width];
+			}
+
+			Up1 = OnUpSampling(tempLL, height); // 업 샘플링
+			Up2 = OnUpSampling(tempLH, height);
+			Up3 = OnUpSampling(tempHL, height);
+			Up4 = OnUpSampling(tempHH, height);
+
+			Conv1 = OnConvolution(Up1, m_FilterG0, height * 2, 2);
+			// 컨벌루션 연산
+			Conv2 = OnConvolution(Up2, m_FilterG1, height * 2, 2);
+			Conv3 = OnConvolution(Up3, m_FilterG0, height * 2, 2);
+			Conv4 = OnConvolution(Up4, m_FilterG1, height * 2, 2);
+			for (j = 0; j<height * 2; j++) {
+				L[j][i] = Conv1[j] + Conv2[j];
+				H[j][i] = Conv3[j] + Conv4[j];
+			}
+		}
+		for (i = 0; i<height * 2; i++) {
+			for (j = 0; j<width; j++) {
+				tempL[j] = L[i][j]; // 횡 데이터 분리
+				tempH[j] = H[i][j];
+			}
+
+			Up1 = OnUpSampling(tempL, width); // 업 샘플링
+			Up2 = OnUpSampling(tempH, width);
+
+			Conv1 = OnConvolution(Up1, m_FilterG0, width * 2, 2);
+			// 컨벌루션 연산
+			Conv2 = OnConvolution(Up2, m_FilterG1, width * 2, 2);
+			for (j = 0; j<width * 2; j++) {
+				R[i][j] = Conv1[j] + Conv2[j];
+			}
+		}
+
+		for (i = 0; i<height * 2; i++) {
+			for (j = 0; j<width * 2; j++) {
+				m_tempOutput[i][j] = R[i][j];
+				// 복원 데이터를 다시 정렬
+			}
+		}
+		height = height * 2; // 영상의 크기를 두 배 확장
+		width = width * 2;
+	}
+
+	for (i = 0; i< m_Height; i++) {
+		for (j = 0; j< m_Width; j++) {
+			m_Recon[i*   m_Width + j] = R[i][j];
+			m_OutputImage[i*   m_Width + j]
+				= (unsigned char)R[i][j];
+			// 최종 복원된 결과를 출력
+		}
+	}
+
+	//UpdateAllViews(NULL); MFC 전용 함수이므로 사용하지 않는다.
+
+	delete[] tempLL, tempLH, tempHL, tempHH, tempL, tempH;
+	// 메모리 해제
+	delete[] Up1, Up2, Up3, Up4;
+	delete[] Conv1, Conv2, Conv3, Conv4;
+
+	for (i = 0; i< m_Height; i++) { // 메모리 해제
+		delete[] L[i];
+		delete[] H[i];
+		delete[] R[i];
+	}
+
+	delete L, H, R;
+}
+//순방향 웨이블렛 함수 (코드작성)
+void OnWaveletEncode()
+{
+	// Wavelet encode 함수 분해 레벨이 변수가 아니라 상수로 포팅 되었음에 주의
+	if (Level <= 0 || (pow((double)2, Level + 3) > (double)m_Width) || (pow((double)2, Level + 3) > (double)m_Height)) {
+		return;
+		// 최대 분해 레벨이 512*512이면 6레벨로 제한
+	}
+
+	int i, j, k, width, height;
+	double *m_Conv1, *m_Conv2, *m_Conv3, *m_Conv4;
+	// Convolution을 위한 버퍼
+	double *m_Down1, *m_Down2, *m_Down3, *m_Down4;
+	// 다운 샘플링을 위한 버퍼
+	double *m_Hor, *m_Ver1, *m_Ver2;
+	double **m_L, **m_H, **m_LL, **m_LH, **m_HL, **m_HH, **m_SLL, **m_SLH, **m_SHL, **m_SHH;
+
+	m_tempInput = OnMem2DAllocDouble(m_Height, m_Width);
+	m_tempOutput = OnMem2DAllocDouble(m_Height, m_Width);
+	m_ArrangeImage = OnMem2DAllocUnsigned(m_Height, m_Width);
+
+	for (i = 0; i< m_Height; i++) {
+		for (j = 0; j< m_Width; j++) {
+			m_tempInput[i][j]
+				= (double)m_InputImage[i*   m_Width + j];
+			// 1차원 입력을 2차원 배열로 변환
+		}
+	}
+	//OnFilterTapGen(); // FilterTap이 고정 상수이므로 주석처리
+
+	m_FilterH0 = new double[FilterTap]; // 필터 계수를 위한 배열
+	m_FilterH1 = new double[FilterTap]; // 필터 계수를 위한 배열
+	m_FilterG0 = new double[FilterTap]; // 필터 계수를 위한 배열
+	m_FilterG1 = new double[FilterTap]; // 필터 계수를 위한 배열
+
+	OnFilterGen(m_FilterH0, m_FilterH1, m_FilterG0, m_FilterG1);
+	// 필터 계수 생성
+
+	width = m_Width;
+	height = m_Height;
+
+	for (k = 0; k<Level; k++) {
+		m_L = OnMem2DAllocDouble(height, width / 2); //
+		m_H = OnMem2DAllocDouble(height, width / 2); //
+		m_LL = OnMem2DAllocDouble(height / 2, width / 2);
+		// LL 저장을 위한 배열
+		m_LH = OnMem2DAllocDouble(height / 2, width / 2);
+		// LH 저장을 위한 배열
+		m_HL = OnMem2DAllocDouble(height / 2, width / 2);
+		// HL 저장을 위한 배열
+		m_HH = OnMem2DAllocDouble(height / 2, width / 2);
+		// HH 저장을 위한 배열
+
+		m_Hor = new double[width]; // 횡 입력을 위한 배열
+		for (i = 0; i<height; i++) {
+			for (j = 0; j<width; j++) {
+				m_Hor[j] = m_tempInput[i][j];
+				// 입력 배열을 1차원 배열에 할당
+			}
+
+			m_Conv1 = OnConvolution(m_Hor, m_FilterH0, width, 1);
+			// Convolution 처리
+			m_Conv2 = OnConvolution(m_Hor, m_FilterH1, width, 1);
+			// Convolution 처리
+			m_Down1 = OnDownSampling(m_Conv1, width); // 다운 샘플링
+			m_Down2 = OnDownSampling(m_Conv2, width); // 다운 샘플링
+
+			for (j = 0; j<width / 2; j++) {// 다운 샘플링 결과를 저장
+				m_L[i][j] = m_Down1[j];
+				m_H[i][j] = m_Down2[j];
+			}
+		}
+
+		m_Ver1 = new double[height];
+
+		m_Ver2 = new double[height];
+		for (i = 0; i<width / 2; i++) {
+			for (j = 0; j<height; j++) {
+				m_Ver1[j] = m_L[j][i]; // 열 방향으로 1차원 배열에 할당
+				m_Ver2[j] = m_H[j][i];
+			}
+
+			m_Conv1 = OnConvolution(m_Ver1, m_FilterH0, height, 1);
+			// Convolution 처리
+			m_Conv2
+				= OnConvolution(m_Ver1, m_FilterH1, height, 1);
+			m_Conv3
+				= OnConvolution(m_Ver2, m_FilterH0, height, 1);
+			m_Conv4
+				= OnConvolution(m_Ver2, m_FilterH1, height, 1);
+
+			m_Down1 = OnDownSampling(m_Conv1, height); // 다운 샘플링
+			m_Down2 = OnDownSampling(m_Conv2, height);
+			m_Down3 = OnDownSampling(m_Conv3, height);
+			m_Down4 = OnDownSampling(m_Conv4, height);
+
+			for (j = 0; j<height / 2; j++) {
+				m_LL[j][i] = m_Down1[j]; // 결과 저장
+				m_LH[j][i] = m_Down2[j];
+				m_HL[j][i] = m_Down3[j];
+				m_HH[j][i] = m_Down4[j];
+			}
+		}
+		m_SLL = OnScale(m_LL, height / 2, width / 2); // 처리 결과를 정규화
+		m_SLH = OnScale(m_LH, height / 2, width / 2);
+		m_SHL = OnScale(m_HL, height / 2, width / 2);
+		m_SHH = OnScale(m_HH, height / 2, width / 2);
+
+		for (i = 0; i<height / 2; i++) {
+			for (j = 0; j<width / 2; j++) {
+				m_tempOutput[i][j] = m_LL[i][j];
+				m_tempOutput[i][j + (width / 2)] = m_HL[i][j];
+				m_tempOutput[i + (height / 2)][j] = m_LH[i][j];
+				m_tempOutput[i + (height / 2)][j + (width / 2)] =
+					m_HH[i][j];
+				// 처리 결과를 정렬
+				m_ArrangeImage[i][j]
+					= (unsigned char)m_SLL[i][j];
+				m_ArrangeImage[i][j + (width / 2)]
+					= (unsigned char)m_SHL[i][j];
+				m_ArrangeImage[i + (height / 2)][j]
+					= (unsigned char)m_SLH[i][j];
+				m_ArrangeImage[i + (height / 2)][j + (width / 2)]
+					= (unsigned char)m_SHH[i][j];
+				// 정규화 과정을 거친 정렬 영상
+			}
+		}
+		width = width / 2;
+		// 분해를 계속하기 위해 영상의 가로축 크기를 반으로 줄임
+		height = height / 2;
+		// 분해를 계속하기 위해 영상의 세로축 크기를 반으로 줄임
+		m_tempInput = OnMem2DAllocDouble(height, width);
+
+		for (i = 0; i<height; i++) {
+			for (j = 0; j<width; j++) {
+				m_tempInput[i][j] = m_LL[i][j];
+				// LL 값을 새로운 입력으로 할당
+			}
+		}
+	}
+
+	delete[] m_Conv1, m_Conv2, m_Conv3, m_Conv4;
+	delete[] m_Down1, m_Down2, m_Down3, m_Down4;
+	delete[] m_Hor, m_Ver1, m_Ver2;
+	for (i = 0; i<height; i++) { // 메모리 해제
+		delete[] m_LL[i];
+		delete[] m_LH[i];
+		delete[] m_HL[i];
+		delete[] m_HH[i];
+		delete[] m_SLL[i];
+		delete[] m_SLH[i];
+		delete[] m_SHL[i];
+		delete[] m_SHH[i];
+		delete[] m_L[i];
+		delete[] m_H[i];
+	}
+	delete m_L, m_H, m_LL, m_LH, m_HL, m_HH, m_SLL, m_SLH,
+		m_SHL, m_SHH;
+}
