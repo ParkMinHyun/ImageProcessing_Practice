@@ -1,10 +1,10 @@
-/* 1π¯ FFT & RFFT
+Ôªø/* 1ÔøΩÔøΩ FFT & RFFT
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
 struct Complex {
-	double Re; //Variables for real numbers Ω«ºˆ∫Œ
-	double Im; //Variables for imaginary numbers «„ºˆ∫Œ
+	double Re; //Variables for real numbers
+	double Im; //Variables for imaginary numbers 
 };
 Complex **FFT; //Pointer to save FFT result
 
@@ -26,7 +26,7 @@ int main()
 
 	FFTSpectrum = FFT2d(inputImage); //Fast Fourier Transform
 	SaveImage("FFTSpectrum.jpg", FFTSpectrum);
-	RFFTImage = RFFT2d(FFTSpectrum); // Reverse ø™πÊ«‚ FFT
+	RFFTImage = RFFT2d(FFTSpectrum); // Reverse  FFT
 	SaveImage("RFFTSpectrum.jpg", RFFTImage);
 
 	cvShowImage("Input Image", inputImage);
@@ -60,7 +60,7 @@ IplImage* FFT2d(IplImage* inputImage)
 	Num = inputImage->width;
 	Log2N = 0;
 
-	while (Num >= 2) //image Width calculation  øµªÛ¿« ≥ ∫Ò ∞ËªÍ
+	while (Num >= 2) //image Width calculation  ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩ ∫ÔøΩ ÔøΩÔøΩÔøΩ
 	{
 		Num >>= 1;
 		Log2N++;
@@ -72,7 +72,6 @@ IplImage* FFT2d(IplImage* inputImage)
 
 	FFT = new Complex *[inputImage->height];
 	//Arrangement for storing frequency-domain transformed images
-	//¡÷∆ƒºˆ øµø™ ∫Ø»Ø øµªÛ¿ª ¿˙¿Â«œ±‚ ¿ß«— πËø≠
 	temp = new unsigned char *[inputImage->height];
 
 	for (i = 0; i<inputImage->height; i++) {
@@ -85,10 +84,9 @@ IplImage* FFT2d(IplImage* inputImage)
 		{
 			Data[j].Re = (double)inputImage->imageData[i*inputImage->widthStep + j];
 			//copy one row of input, the real component value is the value of the image
-			//¿‘∑¬¿« «— «‡¿ª ∫πªÁ, Ω«ºˆ º∫∫– ∞™¿∫ øµªÛ¿« ∞™
-			Data[j].Im = 0.0; //The complex component value is 0 ∫πº“ º∫∫– ∞™¿∫ 0
+			Data[j].Im = 0.0; //The complex component value is 0 
 		}
-		FFT1d(Data, inputImage->width, Log2N); //1D FFT 1¬˜ø¯ FFT
+		FFT1d(Data, inputImage->width, Log2N); 
 
 		for (j = 0; j<inputImage->width; j++) { //Save Results
 			FFT[i][j].Re = Data[j].Re;
@@ -99,7 +97,7 @@ IplImage* FFT2d(IplImage* inputImage)
 	Num = inputImage->height;
 	Log2N = 0;
 
-	while (Num >= 2) //Image height calculation øµªÛ¿« ≥Ù¿Ã ∞ËªÍ
+	while (Num >= 2) //Image height calculation 
 	{
 		Num >>= 1;
 		Log2N++;
@@ -109,11 +107,11 @@ IplImage* FFT2d(IplImage* inputImage)
 
 	for (i = 0; i<inputImage->width; i++) {
 		for (j = 0; j<inputImage->height; j++) {
-			Data[j].Re = FFT[j][i].Re; //Copy a row of images øµªÛ¿« «— ø≠¿ª ∫πªÁ
+			Data[j].Re = FFT[j][i].Re; //Copy a row of images
 			Data[j].Im = FFT[j][i].Im;
 		}
 
-		FFT1d(Data, inputImage->height, Log2N); //1D FFT 1¬˜ø¯ FFT
+		FFT1d(Data, inputImage->height, Log2N); //1D FFT 1ÔøΩÔøΩÔøΩÔøΩ FFT
 
 		for (j = 0; j<inputImage->height; j++) { //Save Results
 			FFT[j][i].Re = Data[j].Re;
@@ -134,7 +132,7 @@ IplImage* FFT2d(IplImage* inputImage)
 			cvSet2D(tempImage, i, j, cvScalar(Absol));
 		}
 	}
-	//shuffling process º≈«√∏µ ∞˙¡§
+	//shuffling process 
 	for (i = 0; i<inputImage->height; i += inputImage->height / 2) {
 		for (j = 0; j<inputImage->width; j += inputImage->width / 2) {
 			for (row = 0; row<inputImage->height / 2; row++) {
@@ -264,27 +262,26 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 	Num = FFTSpectrum->width;
 	Log2N = 0;
 	while (Num >= 2) //Calculating the width of a frequency-converted image
-	{			//¡÷∆ƒºˆ ∫Ø»Øµ» øµªÛ¿« ≥ ∫Ò ∞ËªÍ
 		Num >>= 1;
 		Log2N++;
 	}
 
 	Data = new Complex[FFTSpectrum->height];
 	RFFT = new Complex *[FFTSpectrum->height]; //Arrangement for an inversely transformed image
-											   //ø™∫Ø»Øµ» øµªÛ¿ª ¿ß«— πËø≠
+											  
 	for (i = 0; i<FFTSpectrum->height; i++) {
 		RFFT[i] = new Complex[FFTSpectrum->width];
 	}
 
 	for (i = 0; i<FFTSpectrum->height; i++) {
-		for (j = 0; j<FFTSpectrum->width; j++) { //Copy one row «— «‡¿ª ∫πªÁ
+		for (j = 0; j<FFTSpectrum->width; j++) { //Copy one row 
 			Data[j].Re = FFT[i][j].Re;
 			Data[j].Im = FFT[i][j].Im;
 		}
 		RFFT1d(Data, FFTSpectrum->width, Log2N); //1D RFFT
 
 		for (j = 0; j<FFTSpectrum->width; j++) {
-			RFFT[i][j].Re = Data[j].Re; //Save Results ∞·∞˙ ¿˙¿Â
+			RFFT[i][j].Re = Data[j].Re; //Save Results
 			RFFT[i][j].Im = Data[j].Im;
 		}
 	}
@@ -292,7 +289,6 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 	Num = FFTSpectrum->height;
 	Log2N = 0;
 	while (Num >= 2) //Calculation of height of frequency converted image
-	{			//¡÷∆ƒºˆ ∫Ø»Øµ» øµªÛ¿« ≥Ù¿Ã ∞ËªÍ
 		Num >>= 1;
 		Log2N++;
 	}
@@ -301,13 +297,13 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 
 	for (i = 0; i< FFTSpectrum->width; i++) {
 		for (j = 0; j<FFTSpectrum->height; j++) {
-			Data[j].Re = RFFT[j][i].Re; //Copy one column «— ø≠¿ª ∫πªÁ
+			Data[j].Re = RFFT[j][i].Re; //Copy one column
 			Data[j].Im = RFFT[j][i].Im;
 		}
 
 		RFFT1d(Data, FFTSpectrum->width, Log2N); //1D RFFT
 
-		for (j = 0; j< FFTSpectrum->width; j++) {//Save Results ∞·∞˙ ¿˙¿Â
+		for (j = 0; j< FFTSpectrum->width; j++) {//Save Results 
 			RFFT[j][i].Re = Data[j].Re;
 			RFFT[j][i].Im = Data[j].Im;
 		}
@@ -328,33 +324,40 @@ void RFFT1d(Complex *X, int N, int Log2N)
 	Butterfly(X, N, Log2N, 2);
 }
 */
-/*2π¯*/
+/*2ÔøΩÔøΩ*/
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
 #define PI 3.141592
-#define SUB_SAMPLING_RATE 2 // √‡º“ ∫Ò¿≤
-#define DEGREE 90 // »∏¿¸ ∞¢µµ
+#define SUB_SAMPLING_RATE 2 // ÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ
+#define DEGREE 90 // »∏ÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ
 
 void SaveImage(char *saveImageName, IplImage *saveImage);
-void Swap(double *a, double *b); // µ•¿Ã≈Õ ±≥»Ø
-void BubbleSort(double *A, int MAX); // µ•¿Ã≈Õ ¡§∑ƒ
-IplImage *ScaleDown(IplImage *sclaeDownImage);
+void Swap(double *a, double *b); // ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩ»Ø
+void BubbleSort(double *A, int MAX); // ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ
+IplImage *ScaleDown_Median(IplImage *scaleDownImage);
+IplImage *ScaleDown_RGB(IplImage *sclaeDownImage, IplImage *tempImage);
+IplImage *ScaleDown_Average(IplImage *scaleDownImage);
 IplImage *Mix(IplImage *mainImage, IplImage *scaleDownImage);
 IplImage *Rotation(IplImage *mainImage, IplImage *scaleDownImage);
 
 int main() {
-	IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE); // ±‚¡∏ ¿ÃπÃ¡ˆ ∑ŒµÂ
-	IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_GRAYSCALE); // «’º∫«“ ¿ÃπÃ¡ˆ ∑ŒµÂ
-	IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_GRAYSCALE); // «’º∫«“ ¿ÃπÃ¡ˆ ∑ŒµÂ
-	IplImage* scaleDownImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels); // Scale down ¿ÃπÃ¡ˆ ª˝º∫
-	IplImage* rotationImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels);  // »∏¿¸ ¿ÃπÃ¡ˆ ª˝º∫
-	IplImage* mixImage = cvCreateImage(cvGetSize(lena), lena->depth, lena->nChannels); // «’º∫µ» ¿ÃπÃ¡ˆ ª˝º∫
+	IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE); // ÔøΩÔøΩÔøΩÔøΩ ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩŒµÔøΩ
+	IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_GRAYSCALE); // ÔøΩ’ºÔøΩÔøΩÔøΩ ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩŒµÔøΩ
+	IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_GRAYSCALE); // ÔøΩ’ºÔøΩÔøΩÔøΩ ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩŒµÔøΩ
+	//IplImage* lena = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_COLOR); // ÔøΩÔøΩÔøΩÔøΩ ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩŒµÔøΩ
+	//IplImage* heart = cvLoadImage("heart.jpg", CV_LOAD_IMAGE_COLOR); // ÔøΩ’ºÔøΩÔøΩÔøΩ ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩŒµÔøΩ
+	//IplImage* Rock = cvLoadImage("Rock.jpg", CV_LOAD_IMAGE_COLOR); // ÔøΩ’ºÔøΩÔøΩÔøΩ ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩŒµÔøΩ
+	IplImage* scaleDownImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels); // Scale down ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ
+	IplImage* rotationImage = cvCreateImage(cvSize(lena->width, lena->height), lena->depth, lena->nChannels);  // »∏ÔøΩÔøΩ ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ
+	IplImage* mixImage = cvCreateImage(cvGetSize(lena), lena->depth, lena->nChannels); // ÔøΩ’ºÔøΩÔøΩÔøΩ ÔøΩÃπÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ
 
 	int i, j;
 	CvScalar temp;
 
-	scaleDownImage = ScaleDown(Rock);
+	//scaleDownImage = ScaleDown_Median(Rock); // ÎØ∏ÎîîÏñ∏ Ï∂ïÏÜå
+	scaleDownImage = ScaleDown_Average(Rock);  // ÌèâÍ∑† Ï∂ïÏÜå 
+	//scaleDownImage = ScaleDown_RGB(Rock, scaleDownImage); // Îã®Ïàú Ï∂ïÏÜå(RGB Í∞ÄÎä•)
 	rotationImage = Rotation(scaleDownImage, rotationImage);
 	mixImage = Mix(lena, rotationImage);
 
@@ -390,14 +393,14 @@ void SaveImage(char *saveImageName, IplImage *saveImage) {
 	cvSaveImage(saveImageName, saveImage);
 }
 
-void Swap(double *a, double *b) { // µ•¿Ã≈Õ ±≥»Ø
+void Swap(double *a, double *b) {
 	double temp;
 	temp = *a;
 	*a = *b;
 	*b = temp;
 }
 
-void BubbleSort(double *A, int MAX) { // µ•¿Ã≈Õ ¡§∑ƒ
+void BubbleSort(double *A, int MAX) {
 	int i, j;
 
 	for (i = 0; i < MAX; i++) {
@@ -408,14 +411,77 @@ void BubbleSort(double *A, int MAX) { // µ•¿Ã≈Õ ¡§∑ƒ
 		}
 	}
 }
-IplImage *ScaleDown(IplImage *sclaeDownImage) {
+
+IplImage *ScaleDown_RGB(IplImage *scaleDownImage, IplImage *tempImage) {
+	int i, j;
+	CvScalar pixelValue;
+
+	for (i = 0; i < scaleDownImage->height; i++) {
+		for (j = 0; j < scaleDownImage->width; j++) {
+
+			if (i % 2 == 0 && j % 2 == 0) {
+				pixelValue = cvGet2D(scaleDownImage, i, j);
+				cvSet2D(tempImage, i / 2, j / 2, pixelValue);
+			}
+
+		}
+	}
+	return tempImage;
+}
+IplImage *ScaleDown_Average(IplImage *scaleDownImage) {
+	int i, j, n, m, k, index = 0;
+	double *Mask, *OutputValue, Sum = 0.0;
+	CvScalar tempScalar;
+
+	Mask = new double[SUB_SAMPLING_RATE * SUB_SAMPLING_RATE]; //ÎßàÏä§ÌÅ¨ ÌÅ¨Í∏∞
+
+	IplImage *outputImage = cvCreateImage(cvSize((scaleDownImage->width + 1) / SUB_SAMPLING_RATE, (scaleDownImage->height + 1) / SUB_SAMPLING_RATE), 8, 1);
+	IplImage *tempImage = cvCreateImage(cvSize(scaleDownImage->width + 1, scaleDownImage->height + 1), 8, 1);
+
+	OutputValue = new double[(scaleDownImage->width + 1) / SUB_SAMPLING_RATE * (scaleDownImage->height + 1) / SUB_SAMPLING_RATE];
+
+	cvSetZero(tempImage);
+
+	for (i = 0; i<scaleDownImage->height; i++)
+	{
+		for (j = 0; j<scaleDownImage->width; j++)
+		{
+			cvSet2D(tempImage, i, j, cvGet2D(scaleDownImage, i, j));
+		}
+	}
+
+
+	for (i = 0; i<scaleDownImage->height; i = i + SUB_SAMPLING_RATE) {
+		for (j = 0; j<scaleDownImage->width; j = j + SUB_SAMPLING_RATE) {
+			for (n = 0; n<SUB_SAMPLING_RATE; n++) {
+				for (m = 0; m<SUB_SAMPLING_RATE; m++)
+				{
+					tempScalar = cvGet2D(tempImage, i + n, j + m);
+					Mask[n*SUB_SAMPLING_RATE + m] = tempScalar.val[0]; //ÎßàÏä§ÌÅ¨ ÌÅ¨Í∏∞Ïùò ÌôîÏÜåÍ∞í Î∞∞Ïó¥ ÎßåÎì¨
+				}
+			}
+			for (k = 0; k<SUB_SAMPLING_RATE*SUB_SAMPLING_RATE; k++) { //Î∞∞Ïó¥ Í∞íÎì§ Ìï©Ìï®
+				Sum += Mask[k];
+			}
+
+			OutputValue[index++] = (Sum / (SUB_SAMPLING_RATE * SUB_SAMPLING_RATE)); //SumÍ∞í ÎßàÏä§ÌÅ¨ ÌÅ¨Í∏∞Î°ú ÎÇòÎàÑÏñ¥ÏÑú ÌèâÍ∑†Í∞í Î∞∞Ïó¥ ÎßåÎì¨
+			Sum = 0.0;
+		}
+	}
+
+	for (i = 0; i<outputImage->height; i++) { //OutputValue ÌñâÎ†¨ Í∞íÎì§ outputImageÏóê ÏûÖÎ†•
+		for (j = 0; j<outputImage->width; j++) {
+			cvSet2D(outputImage, i, j, cvScalar(OutputValue[i*outputImage->width + j]));
+		}
+	}
+	return outputImage;
+}
+IplImage *ScaleDown_Median(IplImage *sclaeDownImage) {
 	int i, j, n, m, k, index = 0;
 	double *Mask, *Mask1, *Mask2, *OutputValue, *OutputValue1, *OutputValue2;
 	CvScalar tempScalar;
 
-	Mask = new double[SUB_SAMPLING_RATE * SUB_SAMPLING_RATE]; // ∏∂Ω∫≈© ≈©±‚
-	Mask1 = new double[SUB_SAMPLING_RATE * SUB_SAMPLING_RATE]; // ∏∂Ω∫≈© ≈©±‚
-	Mask2 = new double[SUB_SAMPLING_RATE * SUB_SAMPLING_RATE]; // ∏∂Ω∫≈© ≈©±‚
+	Mask = new double[SUB_SAMPLING_RATE * SUB_SAMPLING_RATE];
 
 	IplImage *outputImage = cvCreateImage(cvSize((sclaeDownImage->width + 1) / SUB_SAMPLING_RATE, (sclaeDownImage->height + 1) / SUB_SAMPLING_RATE), 8, 1);
 	IplImage *tempImage = cvCreateImage(cvSize(sclaeDownImage->width + 1, sclaeDownImage->height + 1), 8, 1);
@@ -423,7 +489,7 @@ IplImage *ScaleDown(IplImage *sclaeDownImage) {
 	OutputValue = new double[(sclaeDownImage->width + 1) / SUB_SAMPLING_RATE*(sclaeDownImage->height + 1) / SUB_SAMPLING_RATE];
 	cvSetZero(tempImage);
 
-	for (i = 0; i < sclaeDownImage->height; i++) { // ¿Œ«≤¿ÃπÃ¡ˆ tempø° ø≈±Ë
+	for (i = 0; i < sclaeDownImage->height; i++) {
 		for (j = 0; j < sclaeDownImage->width; j++) {
 			cvSet2D(tempImage, i, j, cvGet2D(sclaeDownImage, i, j));
 		}
@@ -434,17 +500,15 @@ IplImage *ScaleDown(IplImage *sclaeDownImage) {
 			for (n = 0; n < SUB_SAMPLING_RATE; n++) {
 				for (m = 0; m < SUB_SAMPLING_RATE; m++) {
 					tempScalar = cvGet2D(tempImage, i + n, j + m);
-					Mask[n*SUB_SAMPLING_RATE + m] = tempScalar.val[0]; // ∏∂Ω∫≈© π¸¿ß¿« »≠º“∞™µÈ πËø≠ ∏∏µÍ
-					Mask1[n*SUB_SAMPLING_RATE + m] = tempScalar.val[1]; // ∏∂Ω∫≈© π¸¿ß¿« »≠º“∞™µÈ πËø≠ ∏∏µÍ
-					Mask2[n*SUB_SAMPLING_RATE + m] = tempScalar.val[2]; // ∏∂Ω∫≈© π¸¿ß¿« »≠º“∞™µÈ πËø≠ ∏∏µÍ
+					Mask[n*SUB_SAMPLING_RATE + m] = tempScalar.val[0]; 
 				}
 			}
-			BubbleSort(Mask, SUB_SAMPLING_RATE * SUB_SAMPLING_RATE); // ∏∂Ω∫≈© πËø≠ ∞™µÈ ¡§∑ƒ
-			OutputValue[index++] = Mask[(int)(SUB_SAMPLING_RATE * SUB_SAMPLING_RATE / 2)]; // OutputValue «‡∑ƒø° ¡ﬂ∞£∞™µÈ «‡∑ƒ
+			BubbleSort(Mask, SUB_SAMPLING_RATE * SUB_SAMPLING_RATE); 
+			OutputValue[index++] = Mask[(int)(SUB_SAMPLING_RATE * SUB_SAMPLING_RATE / 2)];
 		}
 	}
 
-	for (i = 0; i < outputImage->height; i++) { // OutputValue «‡∑ƒ ∞™µÈ outputImageø° ¿‘∑¬
+	for (i = 0; i < outputImage->height; i++) { 
 		for (j = 0; j < outputImage->width; j++) {
 			cvSet2D(outputImage, i, j, cvScalar(OutputValue[i*outputImage->width + j]));
 		}
@@ -454,19 +518,19 @@ IplImage *ScaleDown(IplImage *sclaeDownImage) {
 
 IplImage *Mix(IplImage *mainImage, IplImage *scaleDownImage) {
 	int i, j;
-	IplImage* mixImage = cvCreateImage(cvGetSize(mainImage), mainImage->depth, mainImage->nChannels); // «’º∫µ» ¿ÃπÃ¡ˆ ª˝º∫
+	IplImage* mixImage = cvCreateImage(cvGetSize(mainImage), mainImage->depth, mainImage->nChannels);
 	CvScalar pixelValue, temp;
 
 	for (i = 0; i < scaleDownImage->height; i++) {
 		for (j = 0; j < scaleDownImage->width; j++) {
 
-			pixelValue = cvGet2D(scaleDownImage, i, j); // «’º∫«“ ¿ÃπÃ¡ˆ¿« ªˆ æÚ±‚
+			pixelValue = cvGet2D(scaleDownImage, i, j); 
 			if (pixelValue.val[0] != 255) {
-				temp = cvGet2D(scaleDownImage, i, j); // ±◊ø‹¥¬ ø¯∫ª ∞™
+				temp = cvGet2D(scaleDownImage, i, j);
 				cvSet2D(mixImage, i, j, temp);
 			}
 			else {
-				temp = cvGet2D(mainImage, i, j); // «’º∫«“ ¿ÃπÃ¡ˆ ∫∏¥Ÿ æÓµŒøÏ∏È ±◊ ªˆ¿ª º≥¡§
+				temp = cvGet2D(mainImage, i, j);
 				cvSet2D(mixImage, i, j, temp);
 			}
 		}
@@ -480,7 +544,7 @@ IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 	double Radian, cosR, sinR;
 	CvScalar Value;
 
-	Radian = (double)DEGREE * PI / 180.0; // degree ∞™¿ª radian¿∏∑Œ ∫Ø∞Ê
+	Radian = (double)DEGREE * PI / 180.0; 
 
 	cosR = cos(Radian);
 	sinR = sin(Radian);
@@ -488,7 +552,7 @@ IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 	Center_y = inputImage->height / 2;
 	Center_x = inputImage->width / 2;
 
-	for (i = 0; i < inputImage->height; i++) { // ¡¬øÏπ›¿¸
+	for (i = 0; i < inputImage->height; i++) { 
 		for (j = 0; j < inputImage->width; j++) {
 			source_x = (int)((j - Center_x)*cosR + (i - Center_y)*sinR + Center_x);
 			source_y = (int)(-(j - Center_x)*sinR + (i - Center_y)*cosR + Center_y);
@@ -505,7 +569,7 @@ IplImage *Rotation(IplImage *inputImage, IplImage *outputImage) {
 }
 
 //----------------------------------------------------------------------------------------------------------------------
-// ∞Ò∞›»≠
+// Í≥®Í≤©Ìôî
 //----------------------------------------------------------------------------------------------------------------------
 //#include <opencv\cv.h>
 //#include <opencv\highgui.h>
