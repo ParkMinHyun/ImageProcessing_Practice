@@ -19,7 +19,6 @@ int ReverseBitOrder(int index, int Log2N);
 double ReceiveSNRvalue(IplImage* originalImage, IplImage *outputImage);
 IplImage* RFFT2d(IplImage* FFTSpectrum);
 void RFFT1d(Complex *X, int N, int Log2N);
-double* ConvertToOneDimensionalArray(IplImage* Image);
 
 int main()
 {
@@ -45,56 +44,6 @@ int main()
 	cvReleaseImage(&RFFTImage);
 
 	return 0;
-}
-double ReceiveSNRvalue(IplImage* originalImage, IplImage *outputImage)
-{
-	double SNRValue;
-	double *m_InputImage;
-	double *m_SkeletonImage;
-	double OrgSum, ErrSum, MeanErr, MeanOrg;
-	int i, j;
-
-	OrgSum = 0.0;
-	ErrSum = 0.0;
-	
-	CvScalar originalImagePixel, outputImagePixel;
-	int m_Size = originalImage->width * originalImage->height;
-
-	for (int i = 0; i < originalImage->height; i++) {
-		for (int j = 0; j < originalImage->width; j++) {
-			originalImagePixel = cvGet2D(originalImage, i, j);
-			outputImagePixel = cvGet2D(outputImage, i, j);
-			ErrSum += ((double)originalImagePixel.val[0] - outputImagePixel.val[0]) *
-				((double)originalImagePixel.val[0] - outputImagePixel.val[0]);
-		}
-	}
-	MeanErr = ErrSum / m_Size;
-	
-	for (int i = 0; i < originalImage->height; i++) {
-		for (int j = 0; j < originalImage->width; j++) {
-			originalImagePixel = cvGet2D(originalImage, i, j);
-			OrgSum += ((double)originalImagePixel.val[0]) * ((double)originalImagePixel.val[0]);
-		}
-	}
-	MeanOrg = OrgSum / m_Size;
-
-	SNRValue = (10 * (double)log10(MeanOrg / MeanErr));
-	return SNRValue;
-}
-
-double* ConvertToOneDimensionalArray(IplImage* Image) {
-	double convertImage[262144];
-
-	CvScalar pixel;
-	int cnt = 0;
-	for (int i = 0; i < Image->height; i++) {
-		for (int j = 0; j < Image->width; j++) {
-			pixel = cvGet2D(Image, i, j);
-			convertImage[cnt] = pixel.val[0];
-			cnt += 1;
-		}
-	}
-	return convertImage;
 }
 IplImage* FFT2d(IplImage* inputImage)
 {
@@ -302,7 +251,6 @@ int ReverseBitOrder(int index, int Log2N)
 	return Y;
 }
 
-
 IplImage* RFFT2d(IplImage* FFTSpectrum)
 {
 	Complex **RFFT;
@@ -373,6 +321,7 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 
 	return outputImage;
 }
+
 void RFFT1d(Complex *X, int N, int Log2N)
 {
 	Scrambling(X, N, Log2N);
@@ -381,6 +330,42 @@ void RFFT1d(Complex *X, int N, int Log2N)
 
 void SaveImage(char *saveImageName, IplImage *saveImage) {
 	cvSaveImage(saveImageName, saveImage);
+}
+
+double ReceiveSNRvalue(IplImage* originalImage, IplImage *outputImage)
+{
+	double SNRValue;
+	double *m_InputImage;
+	double *m_SkeletonImage;
+	double OrgSum, ErrSum, MeanErr, MeanOrg;
+	int i, j;
+
+	OrgSum = 0.0;
+	ErrSum = 0.0;
+
+	CvScalar originalImagePixel, outputImagePixel;
+	int m_Size = originalImage->width * originalImage->height;
+
+	for (int i = 0; i < originalImage->height; i++) {
+		for (int j = 0; j < originalImage->width; j++) {
+			originalImagePixel = cvGet2D(originalImage, i, j);
+			outputImagePixel = cvGet2D(outputImage, i, j);
+			ErrSum += ((double)originalImagePixel.val[0] - outputImagePixel.val[0]) *
+				((double)originalImagePixel.val[0] - outputImagePixel.val[0]);
+		}
+	}
+	MeanErr = ErrSum / m_Size;
+
+	for (int i = 0; i < originalImage->height; i++) {
+		for (int j = 0; j < originalImage->width; j++) {
+			originalImagePixel = cvGet2D(originalImage, i, j);
+			OrgSum += ((double)originalImagePixel.val[0]) * ((double)originalImagePixel.val[0]);
+		}
+	}
+	MeanOrg = OrgSum / m_Size;
+
+	SNRValue = (10 * (double)log10(MeanOrg / MeanErr));
+	return SNRValue;
 }
 
 //-------------------------------------------------------------------------------------------------
