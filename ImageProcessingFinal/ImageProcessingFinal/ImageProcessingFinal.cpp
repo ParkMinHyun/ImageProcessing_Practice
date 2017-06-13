@@ -1,19 +1,21 @@
-﻿/* 1�� FFT & RFFT
+﻿/*1번-FFT&RFFT*/
+/*
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
 struct Complex {
-	double Re; //Variables for real numbers
-	double Im; //Variables for imaginary numbers 
+	double Re; //Variables for real numbers 실수부
+	double Im; //Variables for imaginary numbers 허수부
 };
+
 Complex **FFT; //Pointer to save FFT result
 
 IplImage* FFT2d(IplImage* inpuImage);
 void FFT1d(Complex *X, int N, int Log2N);
 void Scrambling(Complex *X, int N, int Log2N);
 void Butterfly(Complex *X, int N, int Log2N, int mode);
-int ReverseBitOrder(int index, int Log2N);
 void SaveImage(char *saveImageName, IplImage *saveImage);
+int ReverseBitOrder(int index, int Log2N);
 
 IplImage* RFFT2d(IplImage* FFTSpectrum);
 void RFFT1d(Complex *X, int N, int Log2N);
@@ -25,9 +27,9 @@ int main()
 	IplImage* RFFTImage;
 
 	FFTSpectrum = FFT2d(inputImage); //Fast Fourier Transform
-	SaveImage("FFTSpectrum.jpg", FFTSpectrum);
-	RFFTImage = RFFT2d(FFTSpectrum); // Reverse  FFT
-	SaveImage("RFFTSpectrum.jpg", RFFTImage);
+	SaveImage("FFTSPECTRUM.jpg", FFTSpectrum);
+	RFFTImage = RFFT2d(FFTSpectrum); // Reverse 역방향 FFT
+	SaveImage("RFFTImage.jpg", RFFTImage);
 
 	cvShowImage("Input Image", inputImage);
 	cvShowImage("FFT Spectrum", FFTSpectrum);
@@ -39,10 +41,6 @@ int main()
 	cvReleaseImage(&RFFTImage);
 
 	return 0;
-}
-
-void SaveImage(char *saveImageName, IplImage *saveImage) {
-	cvSaveImage(saveImageName, saveImage);
 }
 
 IplImage* FFT2d(IplImage* inputImage)
@@ -60,7 +58,7 @@ IplImage* FFT2d(IplImage* inputImage)
 	Num = inputImage->width;
 	Log2N = 0;
 
-	while (Num >= 2) //image Width calculation  ������ �ʺ� ���
+	while (Num >= 2) //image Width calculation  영상의 너비 계산
 	{
 		Num >>= 1;
 		Log2N++;
@@ -72,6 +70,7 @@ IplImage* FFT2d(IplImage* inputImage)
 
 	FFT = new Complex *[inputImage->height];
 	//Arrangement for storing frequency-domain transformed images
+	//주파수 영역 변환 영상을 저장하기 위한 배열
 	temp = new unsigned char *[inputImage->height];
 
 	for (i = 0; i<inputImage->height; i++) {
@@ -83,10 +82,11 @@ IplImage* FFT2d(IplImage* inputImage)
 		for (j = 0; j<inputImage->width; j++)
 		{
 			Data[j].Re = (double)inputImage->imageData[i*inputImage->widthStep + j];
-			//copy one row of input, the real component value is the value of the image
-			Data[j].Im = 0.0; //The complex component value is 0 
+			// copy one row of input, the real component value is the value of the image
+			//입력의 한 행을 복사, 실수 성분 값은 영상의 값
+			Data[j].Im = 0.0; //The complex component value is 0 복소 성분 값은 0
 		}
-		FFT1d(Data, inputImage->width, Log2N); 
+		FFT1d(Data, inputImage->width, Log2N); //1D FFT 1차원 FFT
 
 		for (j = 0; j<inputImage->width; j++) { //Save Results
 			FFT[i][j].Re = Data[j].Re;
@@ -97,7 +97,7 @@ IplImage* FFT2d(IplImage* inputImage)
 	Num = inputImage->height;
 	Log2N = 0;
 
-	while (Num >= 2) //Image height calculation 
+	while (Num >= 2) //Image height calculation 영상의 높이 계산
 	{
 		Num >>= 1;
 		Log2N++;
@@ -107,11 +107,11 @@ IplImage* FFT2d(IplImage* inputImage)
 
 	for (i = 0; i<inputImage->width; i++) {
 		for (j = 0; j<inputImage->height; j++) {
-			Data[j].Re = FFT[j][i].Re; //Copy a row of images
+			Data[j].Re = FFT[j][i].Re; //Copy a row of images 영상의 한 열을 복사
 			Data[j].Im = FFT[j][i].Im;
 		}
 
-		FFT1d(Data, inputImage->height, Log2N); //1D FFT 1���� FFT
+		FFT1d(Data, inputImage->height, Log2N); //1D FFT 1차원 FFT
 
 		for (j = 0; j<inputImage->height; j++) { //Save Results
 			FFT[j][i].Re = Data[j].Re;
@@ -132,7 +132,7 @@ IplImage* FFT2d(IplImage* inputImage)
 			cvSet2D(tempImage, i, j, cvScalar(Absol));
 		}
 	}
-	//shuffling process 
+	//shuffling process 셔플링 과정
 	for (i = 0; i<inputImage->height; i += inputImage->height / 2) {
 		for (j = 0; j<inputImage->width; j += inputImage->width / 2) {
 			for (row = 0; row<inputImage->height / 2; row++) {
@@ -262,26 +262,27 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 	Num = FFTSpectrum->width;
 	Log2N = 0;
 	while (Num >= 2) //Calculating the width of a frequency-converted image
+	{			//주파수 변환된 영상의 너비 계산
 		Num >>= 1;
 		Log2N++;
 	}
 
 	Data = new Complex[FFTSpectrum->height];
 	RFFT = new Complex *[FFTSpectrum->height]; //Arrangement for an inversely transformed image
-											  
+											   //역변환된 영상을 위한 배열
 	for (i = 0; i<FFTSpectrum->height; i++) {
 		RFFT[i] = new Complex[FFTSpectrum->width];
 	}
 
 	for (i = 0; i<FFTSpectrum->height; i++) {
-		for (j = 0; j<FFTSpectrum->width; j++) { //Copy one row 
+		for (j = 0; j<FFTSpectrum->width; j++) { //Copy one row 한 행을 복사
 			Data[j].Re = FFT[i][j].Re;
 			Data[j].Im = FFT[i][j].Im;
 		}
 		RFFT1d(Data, FFTSpectrum->width, Log2N); //1D RFFT
 
 		for (j = 0; j<FFTSpectrum->width; j++) {
-			RFFT[i][j].Re = Data[j].Re; //Save Results
+			RFFT[i][j].Re = Data[j].Re; //Save Results 결과 저장
 			RFFT[i][j].Im = Data[j].Im;
 		}
 	}
@@ -289,6 +290,7 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 	Num = FFTSpectrum->height;
 	Log2N = 0;
 	while (Num >= 2) //Calculation of height of frequency converted image
+	{			//주파수 변환된 영상의 높이 계산
 		Num >>= 1;
 		Log2N++;
 	}
@@ -297,13 +299,13 @@ IplImage* RFFT2d(IplImage* FFTSpectrum)
 
 	for (i = 0; i< FFTSpectrum->width; i++) {
 		for (j = 0; j<FFTSpectrum->height; j++) {
-			Data[j].Re = RFFT[j][i].Re; //Copy one column
+			Data[j].Re = RFFT[j][i].Re; //Copy one column 한 열을 복사
 			Data[j].Im = RFFT[j][i].Im;
 		}
 
 		RFFT1d(Data, FFTSpectrum->width, Log2N); //1D RFFT
 
-		for (j = 0; j< FFTSpectrum->width; j++) {//Save Results 
+		for (j = 0; j< FFTSpectrum->width; j++) {//Save Results 결과 저장
 			RFFT[j][i].Re = Data[j].Re;
 			RFFT[j][i].Im = Data[j].Im;
 		}
@@ -323,8 +325,11 @@ void RFFT1d(Complex *X, int N, int Log2N)
 	Scrambling(X, N, Log2N);
 	Butterfly(X, N, Log2N, 2);
 }
-*/
-/*2��*/
+
+void SaveImage(char *saveImageName, IplImage *saveImage) {
+	cvSaveImage(saveImageName, saveImage);
+}
+/*
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
@@ -570,7 +575,7 @@ IplImage *Mix(IplImage *mainImage, IplImage *scaleDownImage) {
 	}
 	return mixImage;
 }
-
+*/
 //----------------------------------------------------------------------------------------------------------------------
 // 골격화
 //----------------------------------------------------------------------------------------------------------------------
