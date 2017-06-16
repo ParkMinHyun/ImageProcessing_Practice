@@ -392,8 +392,8 @@ int main()
 	IplImage *scaleDownImage = cvCreateImage(cvSize((inputImage->width + 1) / SUB_SAMPLING_RATE, (inputImage->height + 1) / SUB_SAMPLING_RATE), 8, 1);
 	IplImage *tempImage = cvCreateImage(cvSize(inputImage->width, inputImage->height + 1), 8, 1);
 	IplImage *outputImage;
-	IplImage *rotationImage;
-	IplImage *sizeTransferRotationImage;
+	IplImage *rotationImage;				// 90도 단위 회전 시 
+	IplImage *sizeTransferRotationImage;	// 45도 등 크기에 벗어나는 회전 시
 	IplImage *sumImage = cvCreateImage(cvSize(inputImage->width+1, inputImage->height+1), inputImage->depth, inputImage->nChannels);
 
 	scaleDownImage = Reduction(inputImage, scaleDownImage, tempImage);
